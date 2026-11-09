@@ -69,6 +69,39 @@ Koszt jednej frazy: 1 strona wyszukiwania + do `--per-keyword` stron produktów 
 dużo mniej, bo te same książki wracają w wielu frazach). 30 fraz × 10 ≈ 300 stron ≈ 25–40 min
 przy `KDP_DELAY=5`.
 
+## Bramka domowa: Luckfox Pico Ultra (gdy Amazon blokuje IP VPS-a)
+
+Amazon blokuje adresy serwerowe. Rozwiązanie: mała płytka w domu działa jako proxy,
+a cała logika zostaje na VPS. Luckfox sam zestawia **odwrotny tunel SSH** do VPS-a, więc
+na routerze nie otwierasz żadnych portów. Na VPS proxy jest dostępne tylko pod
+`127.0.0.1:8888`, a konto `kdptunnel` nie ma powłoki i może wystawić wyłącznie ten jeden port.
+
+```
+VPS: kdp_agent.py --> 127.0.0.1:8888 ==tunel SSH==> Luckfox: tinyproxy --> Amazon (domowe IP)
+```
+
+1. **Luckfox** (obraz Ubuntu, kabel do routera), jako root:
+   ```bash
+   git clone https://github.com/roberttomecki/kdp-niche-agent.git && cd kdp-niche-agent
+   sudo bash deploy/luckfox/setup_luckfox.sh ADRES_IP_VPS
+   ```
+   Na końcu wypisze komendę z kluczem publicznym – skopiuj ją.
+2. **VPS**, jako root, w katalogu `/opt/kdp-niche-agent` (po `git pull`):
+   ```bash
+   sudo bash deploy/vps/setup_vps_tunnel.sh 'ssh-ed25519 AAAA... kdp-tunnel@luckfox'
+   ```
+3. **Luckfox**: `systemctl restart kdp-tunnel`
+4. **VPS**, test – ma pokazać Twój domowy IP:
+   ```bash
+   curl -s -x http://127.0.0.1:8888 https://api.ipify.org ; echo
+   ```
+5. **VPS**: w `.env` ustaw `KDP_PROXY=http://127.0.0.1:8888` i uruchom agenta jak zwykle.
+
+Diagnostyka na Luckfoxie: `systemctl status kdp-tunnel tinyproxy --no-pager`,
+`journalctl -u kdp-tunnel -n 50`. Tunel sam się odnawia po zaniku sieci lub restarcie.
+Proxy przepuszcza tylko HTTPS (port 443). Nie zmniejszaj `KDP_DELAY` – domowe IP też można
+„spalić” zbyt szybkim scrapowaniem.
+
 ## Gdy parser przestanie działać
 
 Amazon co jakiś czas zmienia HTML. Objaw: w logu „0 wyników sparsowanych” albo puste BSR.
