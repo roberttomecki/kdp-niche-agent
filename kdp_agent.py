@@ -177,6 +177,8 @@ def main():
                 do_discover(f, db, market, seeds, args.deep)
                 if not do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword):
                     break
+                if not use_ai:
+                    break  # bez AI nie ma nowych seedów – kolejna runda nic nie wniesie
                 if use_ai:
                     advice, new = llm.advise(market, db.latest_niches(market), db.keywords(market))
                     seeds = [s for s in new if not db.keywords(market, seed=s)]
