@@ -23,6 +23,7 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
         return None
     serp = parse_serp(html)
     if not serp["items"]:
+        db.cache_del(search_url(m, kw))  # nie trzymaj w cache strony, z której nic nie wyszło
         log.warning("0 wyników sparsowanych dla '%s' – możliwa zmiana HTML Amazona", kw)
         if f.debug_dir:
             f.debug_dir.mkdir(parents=True, exist_ok=True)

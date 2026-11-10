@@ -32,6 +32,10 @@ class DB:
             return row[0]
         return None
 
+    def cache_del(self, key):
+        self.c.execute("DELETE FROM cache WHERE key=?", (key,))
+        self.c.commit()
+
     def cache_put(self, key, body):
         self.c.execute("REPLACE INTO cache VALUES (?,?,?)", (key, body, time.time()))
         self.c.commit()
