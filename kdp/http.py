@@ -20,6 +20,12 @@ CAPTCHA_MARKERS = ("/errors/validateCaptcha", "api-services-support@amazon.com",
                    "Enter the characters you see below", "Geben Sie die Zeichen")
 
 
+# Amazon pokazuje ceny w walucie kraju odwiedzającego (np. PLN dla polskiego IP).
+# Ciasteczko i18n-prefs wymusza walutę rynku.
+CURRENCY = {"en_US": "USD", "en_GB": "GBP", "de_DE": "EUR", "fr_FR": "EUR", "it_IT": "EUR",
+            "es_ES": "EUR", "en_CA": "CAD", "en_AU": "AUD"}
+
+
 class Blocked(Exception):
     pass
 
@@ -56,6 +62,7 @@ class Fetcher:
             "User-Agent": random.choice(USER_AGENTS),
             "Accept-Language": f"{lang.replace('_', '-')},{lang[:2]};q=0.9,en;q=0.8",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Cookie": f"i18n-prefs={CURRENCY.get(lang, 'USD')}; lc-main={lang}",
         }
 
     def get_json(self, url: str, params: dict, lang: str, ttl_h: float = 72):
