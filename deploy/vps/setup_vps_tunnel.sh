@@ -25,6 +25,6 @@ echo "$EFF" | grep -qi '^allowtcpforwarding \(no\|local\)' && \
 echo "$EFF" | grep -qi '^allowusers ' && ! echo "$EFF" | grep -i '^allowusers ' | grep -qw "$U" && \
   echo "UWAGA: sshd ma AllowUsers bez '$U' – dopisz go w /etc/ssh/sshd_config i zrestartuj ssh"
 
-echo "OK: konto '$U' gotowe. Na Luckfoxie: systemctl restart kdp-tunnel"
+echo "OK: konto '$U' gotowe. Na Luckfoxie: sudo systemctl restart kdp-tunnel"
 echo "Test tutaj (po ~30 s):  curl -s -x http://127.0.0.1:${PROXY_PORT} https://api.ipify.org ; echo"
 echo "Powinien pokazać Twój domowy adres IP, a nie adres VPS."

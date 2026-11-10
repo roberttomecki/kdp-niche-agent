@@ -87,6 +87,6 @@ echo "Gotowe po stronie Luckfoxa. Teraz na VPS (jako root) uruchom:"
 echo
 echo "  sudo bash deploy/vps/setup_vps_tunnel.sh '$(cat ${KEY}.pub)'"
 echo
-echo "Potem wróć tutaj i wpisz:  systemctl restart kdp-tunnel"
-echo "Status:                    systemctl status kdp-tunnel --no-pager"
+echo "Potem wróć tutaj i wpisz:  sudo systemctl restart kdp-tunnel"
+echo "Status:                    sudo systemctl status kdp-tunnel --no-pager"
 echo "================================================================"
