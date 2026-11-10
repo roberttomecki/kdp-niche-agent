@@ -92,7 +92,8 @@ class Fetcher:
             except requests.RequestException:
                 continue
             html = r.text
-            if r.status_code == 200 and not any(m in html for m in CAPTCHA_MARKERS):
+            # Prawdziwe strony Amazona mają setki KB; kilka KB to strona z wyzwaniem JS/CAPTCHA
+            if r.status_code == 200 and len(html) > 20000 and not any(m in html for m in CAPTCHA_MARKERS):
                 self.db.cache_put(url, html)
                 return html
             if r.status_code == 404:
