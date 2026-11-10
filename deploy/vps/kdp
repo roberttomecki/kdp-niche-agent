@@ -40,6 +40,9 @@ for r in rows:
     print("  ".join(f"{(r.get(k) or '-')[:w]:<{w}}" for k, _, w in cols))
 EOF
     ;;
+  luckfox|l)
+    exec ssh luckfox
+    ;;
   run)
     echo "Uruchamiam w tle pełny przebieg (log: logs/run.log)…"
     nohup ./run.sh >/dev/null 2>&1 &
@@ -52,6 +55,7 @@ Agent KDP – skróty:
   kdp history "fraza"   historia BSR/opinii/sprzedaży książek z topu frazy
   kdp history ASIN      historia jednej książki
   kdp run               uruchom pełny przebieg teraz (w tle)
+  kdp luckfox           zaloguj się na Luckfoxa (gdziekolwiek stoi)
 EOF
     ;;
 esac

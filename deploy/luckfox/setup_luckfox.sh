@@ -6,6 +6,7 @@ set -euo pipefail
 VPS_HOST="${1:?Podaj adres VPS, np.: sudo bash setup_luckfox.sh 123.45.67.89}"
 VPS_PORT="${2:-22}"
 PROXY_PORT=8888
+SSH_BACK_PORT=2222   # dostęp do SSH Luckfoxa z VPS: ssh luckfox
 KEY=/root/.ssh/kdp_tunnel
 
 [ "$(id -u)" -eq 0 ] || { echo "Uruchom jako root (sudo)."; exit 1; }
@@ -71,6 +72,7 @@ ExecStart=/usr/bin/autossh -M 0 -N -T \\
   -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new \\
   -o BatchMode=yes \\
   -R 127.0.0.1:${PROXY_PORT}:127.0.0.1:${PROXY_PORT} \\
+  -R 127.0.0.1:${SSH_BACK_PORT}:127.0.0.1:22 \\
   kdptunnel@${VPS_HOST}
 Restart=always
 RestartSec=20
@@ -80,6 +82,8 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable kdp-tunnel >/dev/null
+systemctl enable ssh >/dev/null 2>&1 || true   # serwer SSH Luckfoxa musi działać dla 'ssh luckfox' z VPS
+systemctl restart kdp-tunnel
 
 echo
 echo "================================================================"

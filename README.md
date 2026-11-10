@@ -108,6 +108,9 @@ VPS: kdp_agent.py --> 127.0.0.1:8888 ==tunel SSH==> Luckfox: tinyproxy --> Amazo
    ```
 5. **VPS**: w `.env` ustaw `KDP_PROXY=http://127.0.0.1:8888` i uruchom agenta jak zwykle.
 
+Dostęp do Luckfoxa z VPS (niezależnie od tego, w jakiej sieci stoi): `kdp luckfox`
+(albo `ssh luckfox`) – tunel wystawia też jego SSH na VPS pod `127.0.0.1:2222`.
+
 Diagnostyka na Luckfoxie: `systemctl status kdp-tunnel tinyproxy --no-pager`,
 `journalctl -u kdp-tunnel -n 50`. Tunel sam się odnawia po zaniku sieci lub restarcie.
 Proxy przepuszcza tylko HTTPS (port 443). Nie zmniejszaj `KDP_DELAY` – domowe IP też można
