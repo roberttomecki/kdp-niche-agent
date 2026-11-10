@@ -18,6 +18,14 @@ echo "restrict,port-forwarding,permitlisten=\"127.0.0.1:${PROXY_PORT}\",command=
 chown "$U:$U" "$H/.ssh/authorized_keys"
 chmod 600 "$H/.ssh/authorized_keys"
 
+# Zrywaj martwe połączenia po ~90 s (np. gdy Luckfox zostanie nagle odłączony),
+# inaczej stara sesja blokuje port 8888 i nowy tunel nie może wystartować.
+if [ -d /etc/ssh/sshd_config.d ]; then
+  printf 'ClientAliveInterval 30\nClientAliveCountMax 3\n' > /etc/ssh/sshd_config.d/10-kdp-keepalive.conf
+  if sshd -t; then systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
+  else rm -f /etc/ssh/sshd_config.d/10-kdp-keepalive.conf; echo "UWAGA: nie ustawiono keepalive (błąd konfiguracji sshd)"; fi
+fi
+
 # Sprawdź ustawienia sshd, które mogłyby zablokować tunel
 EFF=$(sshd -T 2>/dev/null || true)
 echo "$EFF" | grep -qi '^allowtcpforwarding \(no\|local\)' && \
