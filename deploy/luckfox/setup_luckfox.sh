@@ -20,8 +20,6 @@ echo "== Konfiguruję tinyproxy (tylko localhost, tylko HTTPS)"
 cat > /etc/tinyproxy/tinyproxy.conf <<EOF
 User tinyproxy
 Group tinyproxy
-# Wymagane przez usługę systemd w Ubuntu 22.04 (Type=forking czeka na ten plik)
-PidFile "/run/tinyproxy/tinyproxy.pid"
 Port ${PROXY_PORT}
 Listen 127.0.0.1
 Timeout 60
@@ -35,6 +33,21 @@ ConnectPort 443
 DisableViaHeader Yes
 XTinyproxy No
 EOF
+# Ubuntu 22.04: domyślna usługa (Type=forking + PIDFile) zawiesza się na Luckfoxie.
+# Uruchamiamy tinyproxy na pierwszym planie (-d) jako zwykłą usługę.
+mkdir -p /etc/systemd/system/tinyproxy.service.d
+cat > /etc/systemd/system/tinyproxy.service.d/override.conf <<'UNIT'
+[Service]
+Type=simple
+PIDFile=
+ExecStart=
+ExecStart=/usr/bin/tinyproxy -d -c /etc/tinyproxy/tinyproxy.conf
+UNIT
+systemctl daemon-reload
+systemctl stop tinyproxy 2>/dev/null || true
+pkill -x tinyproxy 2>/dev/null || true   # resztki po nieudanych startach
+sleep 1
+systemctl reset-failed tinyproxy 2>/dev/null || true
 systemctl enable tinyproxy >/dev/null
 systemctl restart tinyproxy || { journalctl -u tinyproxy -n 20 --no-pager; exit 1; }
 systemctl is-active --quiet tinyproxy && echo "tinyproxy działa"
