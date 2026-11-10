@@ -9,7 +9,7 @@ cat > /etc/update-motd.d/99-kdp <<'EOF'
 #!/bin/sh
 echo ""
 echo "  Agent KDP:  kdp status | kdp raport | kdp history \"fraza\" | kdp run   (kdp = pomoc)"
-echo "  Luckfox:    kdp luckfox   (logowanie przez tunel, hasło użytkownika pico; powrót: exit)"
+echo "  Luckfox:    kdp luckfox   (użytkownik pico, to samo hasło co przy ssh pico@...; powrót: exit)"
 echo ""
 EOF
 chmod +x /etc/update-motd.d/99-kdp
