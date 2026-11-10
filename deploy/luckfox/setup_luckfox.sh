@@ -20,6 +20,8 @@ echo "== Konfiguruję tinyproxy (tylko localhost, tylko HTTPS)"
 cat > /etc/tinyproxy/tinyproxy.conf <<EOF
 User tinyproxy
 Group tinyproxy
+# Wymagane przez usługę systemd w Ubuntu 22.04 (Type=forking czeka na ten plik)
+PidFile "/run/tinyproxy/tinyproxy.pid"
 Port ${PROXY_PORT}
 Listen 127.0.0.1
 Timeout 60
@@ -34,7 +36,8 @@ DisableViaHeader Yes
 XTinyproxy No
 EOF
 systemctl enable tinyproxy >/dev/null
-systemctl restart tinyproxy
+systemctl restart tinyproxy || { journalctl -u tinyproxy -n 20 --no-pager; exit 1; }
+systemctl is-active --quiet tinyproxy && echo "tinyproxy działa"
 
 echo "== Klucz SSH dla tunelu"
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
