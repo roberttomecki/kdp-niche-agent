@@ -55,6 +55,25 @@ def parse_total_results(soup: BeautifulSoup) -> int | None:
     return max(nums) if nums else None
 
 
+BOUGHT_RE = re.compile(
+    r"(?:(\d[\d.,]*\s*[KkTt]?)\+?\s*bought in past month"          # EN: 50+ / 1K+ bought in past month
+    r"|(?:Mehr als|Plus de|Più di|Más de)\s+(\d[\d.,]*\s*[KkTt]?|\d[\d.,]*\s*(?:Tsd|mil|k))\b"
+    r")", re.I)
+
+
+def parse_bought(text: str) -> int | None:
+    """Odznaka Amazona o sprzedaży w ostatnim miesiącu -> dolna granica liczby sztuk."""
+    if not re.search(r"bought in past month|im letzten Monat|mois dernier|mese scorso|mes pasado", text, re.I):
+        return None
+    m = BOUGHT_RE.search(text)
+    if not m:
+        return None
+    raw = (m.group(1) or m.group(2) or "").strip().lower()
+    mult = 1000 if re.search(r"[kt]|tsd|mil", raw) else 1
+    n = to_int(re.sub(r"[^\d]", "", raw))
+    return n * mult if n else None
+
+
 def parse_serp(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
     items = []
@@ -80,7 +99,8 @@ def parse_serp(html: str) -> dict:
             rating = float(m.group(1).replace(",", ".")) if m else None
         items.append({"pos": pos, "asin": asin, "title": title, "sponsored": sponsored,
                       "price": to_price(price_el.get_text()) if price_el else None,
-                      "reviews": reviews or 0, "rating": rating})
+                      "reviews": reviews or 0, "rating": rating,
+                      "bought_month": parse_bought(text)})
     return {"total_results": parse_total_results(soup), "items": items}
 
 

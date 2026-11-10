@@ -72,3 +72,28 @@ def test_total_results_ignores_numbers_in_query():
     assert parse_total_results(BeautifulSoup(h, "html.parser")) == 612
     h = '<span data-component-type="s-result-info-bar"><span>1-48 von über 3.000 Ergebnissen für</span> <span>„kalender 2027“</span></span>'
     assert parse_total_results(BeautifulSoup(h, "html.parser")) == 3000
+
+def test_bought_badge():
+    from kdp.parse import parse_bought
+    assert parse_bought("Large Print 4.6 out of 5 stars 1,234 50+ bought in past month $9.99") == 50
+    assert parse_bought("1K+ bought in past month") == 1000
+    assert parse_bought("Mehr als 100 Mal im letzten Monat gekauft") == 100
+    assert parse_bought("Plus de 50 achetés au cours du mois dernier") == 50
+    assert parse_bought("No badge here, 2027 edition") is None
+
+def test_badge_in_serp_and_history():
+    html = (FX / "serp.html").read_text().replace(
+        "<span>23</span></a>", "<span>23</span></a><span>200+ bought in past month</span>")
+    r = parse_serp(html)
+    assert [i["bought_month"] for i in r["items"]] == [None, None, 200, None]
+    class F(FakeFetcher):
+        def get_html(self, url, lang, ttl_h=72):
+            return html if "/s?" in url else (FX / "product_us.html").read_text()
+    with tempfile.TemporaryDirectory() as d:
+        db = DB(Path(d) / "t.sqlite")
+        res = analyze.analyze_keyword(F(), db, get_market("us"), "gratitude journal for women", hits=5)
+        assert res["bought_month_top"] == 200 and res["with_badge"] == 1
+        h = db.product_history("us", "B0BBBB0002")
+        assert len(h) == 1 and h[0][4] == 200
+        analyze.analyze_keyword(F(), db, get_market("us"), "gratitude journal for kids", hits=5)
+        assert len(db.product_history("us", "B0BBBB0002")) == 1  # max 1 wpis na dobę

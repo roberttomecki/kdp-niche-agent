@@ -48,6 +48,17 @@ przez tunel SSH (`ssh -L 8080:localhost:8080 vps`).
 
 Na rynkach DE/FR/IT/ES seedy wpisuj w języku rynku (`dankbarkeitstagebuch`, `carnet de gratitude`).
 
+## Sygnały sprzedaży i historia
+
+- **„Kupione/mies.”** – suma odznak Amazona „X+ bought in past month” z topu wyników. To twarda
+  (choć zaniżona) informacja o sprzedaży; gdy jest, wzmacnia ocenę popytu.
+- **Historia** – przy każdym przebiegu agent zapisuje BSR, opinie, cenę i odznakę każdej książki
+  z topu (maks. raz na dobę). Po kilku cotygodniowych przebiegach widać, czy sprzedaż jest stała:
+  ```bash
+  ./venv/bin/python kdp_agent.py history --keyword "password log book large print"
+  ./venv/bin/python kdp_agent.py history --asin B0XXXXXXXX
+  ```
+
 ## Cron (np. co poniedziałek o 3:17)
 
 ```

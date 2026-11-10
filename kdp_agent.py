@@ -87,6 +87,27 @@ def do_report(db, market, out_dir: Path, advice=None):
     return niches, keywords
 
 
+def show_history(db, market, keyword=None, asins=None):
+    asins = list(asins or [])
+    if keyword:
+        for n in db.latest_niches(market):
+            if n["keyword"] == keyword.lower():
+                asins += [p["asin"] for p in n.get("top_products", [])]
+        if not asins:
+            sys.exit(f"Brak frazy '{keyword}' w bazie dla rynku {market}.")
+    if not asins:
+        sys.exit("Podaj --keyword albo --asin")
+    for a in dict.fromkeys(asins):
+        rows = db.product_history(market, a)
+        if not rows:
+            continue
+        print(f"\n{a}  {rows[-1][5][:70]}")
+        print(f"  {'data':10} {'BSR':>9} {'opinie':>7} {'cena':>6} {'kupione/mies.':>14}")
+        for ts, bsr, rev, price, bought, _ in rows:
+            print(f"  {time.strftime('%Y-%m-%d', time.localtime(ts)):10} {bsr or '-':>9} {rev if rev is not None else '-':>7} "
+                  f"{price or '-':>6} {(str(bought) + '+') if bought else '-':>14}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--db", default=str(ROOT / "data" / "kdp.sqlite"))
@@ -106,6 +127,11 @@ def main():
     a = sub.add_parser("analyze", help="przeanalizuj konkurencję dla zebranych fraz"); common(a)
     a.add_argument("--top", type=int, default=30, help="ile fraz analizować")
     a.add_argument("--per-keyword", type=int, default=10, help="ile książek z topu sprawdzać")
+
+    h = sub.add_parser("history", help="historia BSR/opinii/odznak książek dla frazy lub ASIN")
+    common(h, seeds=False)
+    h.add_argument("--keyword", help="fraza z raportu – pokaże książki z jej topu")
+    h.add_argument("--asin", action="append", help="konkretny ASIN (można wiele razy)")
 
     r = sub.add_parser("report", help="wygeneruj raport"); common(r, seeds=False)
     r.add_argument("--ai", action="store_true", help="dodaj wnioski Claude (ANTHROPIC_API_KEY)")
@@ -133,6 +159,8 @@ def main():
         elif args.cmd == "analyze":
             seeds = load_seeds(args) or None
             do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword)
+        elif args.cmd == "history":
+            show_history(db, market, args.keyword, args.asin)
         elif args.cmd == "report":
             advice = None
             if args.ai and llm.available():

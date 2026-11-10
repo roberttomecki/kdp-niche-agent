@@ -8,7 +8,8 @@ from pathlib import Path
 COLS = [("keyword", "Fraza"), ("score", "Ocena"), ("verdict", "Werdykt"),
         ("total_results", "Wyników"), ("median_bsr", "Mediana BSR"),
         ("est_sales_day_top", "Sprz./dzień top"), ("sellers_in_top", "Sprzedających"),
-        ("weak_sellers", "Słabi, a sprzedają"), ("median_reviews", "Mediana opinii"),
+        ("weak_sellers", "Słabi, a sprzedają"),
+        ("bought_month_top", "Kupione/mies. (top)"), ("with_badge", "Z odznaką"), ("median_reviews", "Mediana opinii"),
         ("median_price", "Mediana ceny"), ("indie_share", "Udział indie"),
         ("keyword_hits", "Popularność AC"), ("sponsored_count", "Reklam")]
 
@@ -63,7 +64,8 @@ tr.bad td:nth-child(2){{color:#888}} tr:not(.det):hover{{background:#f6f6f2;curs
 </style></head><body>
 <h1>Analiza nisz KDP (low-content) – {market.upper()}</h1>
 <p class="note">Wygenerowano {time.strftime('%Y-%m-%d %H:%M')}. Sprzedaż to zgrubny szacunek z BSR – używaj do
-porównań między niszami, nie jako prognozy. „Słabi, a sprzedają” = książki z &lt;50 opiniami i ≥0,5 szt./dzień.
+porównań między niszami, nie jako prognozy. „Słabi, a sprzedają” = książki z &lt;50 opiniami i ≥0,5 szt./dzień
+lub odznaką ≥15 kupionych w ostatnim miesiącu. „Kupione/mies.” to suma odznak Amazona „X+ bought in past month” (dolna granica).
 Kliknij wiersz, żeby zobaczyć książki z topu; kliknij nagłówek, żeby sortować.</p>
 <div class="wrap"><table id="t"><thead><tr>{head}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
 {f'<h2>Wnioski agenta</h2><div class="advice">{_md(advice)}</div>' if advice else ''}
@@ -87,13 +89,14 @@ def _products(n: dict) -> str:
     if not ps:
         return "brak danych"
     rows = "".join(
-        "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+        "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
             html.escape(p.get("asin") or ""), html.escape((p.get("title") or "")[:110]),
             p.get("price") or "–", p.get("reviews") if p.get("reviews") is not None else "–",
-            p.get("bsr") or "–", p.get("est_sales_day") or 0, "tak" if p.get("indie") else "")
+            p.get("bsr") or "–", p.get("est_sales_day") or 0,
+            f'{p["bought_month"]}+' if p.get("bought_month") else "–", "tak" if p.get("indie") else "")
         for p in ps)
     return ("<table><tr><th>ASIN</th><th>Tytuł</th><th>Cena</th><th>Opinie</th><th>BSR</th>"
-            f"<th>Sprz./dzień</th><th>Indie</th></tr>{rows}</table>")
+            f"<th>Sprz./dzień</th><th>Kupione/mies.</th><th>Indie</th></tr>{rows}</table>")
 
 
 def write_json(path: Path, niches):

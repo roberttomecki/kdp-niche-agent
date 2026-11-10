@@ -40,6 +40,7 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
             db.save_product(m.code, item["asin"], p)
         merged = {**item, **{k: v for k, v in p.items() if v not in (None, "")}}
         merged["est_sales_day"] = round(sales_per_day(merged.get("bsr"), m.sales_factor), 2)
+        db.add_history(m.code, merged)
         products.append(merged)
 
     db.save_serp(m.code, kw, serp["total_results"], serp["items"])
@@ -47,7 +48,7 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
     result["sponsored_count"] = sum(1 for i in serp["items"] if i["sponsored"])
     result["top_products"] = [
         {k: p.get(k) for k in ("asin", "title", "price", "reviews", "rating", "bsr",
-                               "est_sales_day", "pages", "pub_date", "indie")}
+                               "est_sales_day", "bought_month", "pages", "pub_date", "indie")}
         for p in products]
     db.save_niche(m.code, kw, result["score"], result)
     db.commit()

@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS serp (
     PRIMARY KEY (market, keyword, ts));
 CREATE TABLE IF NOT EXISTS products (
     market TEXT, asin TEXT, ts REAL, data TEXT, PRIMARY KEY (market, asin));
+CREATE TABLE IF NOT EXISTS product_history (
+    market TEXT, asin TEXT, ts REAL, bsr INTEGER, reviews INTEGER, price REAL,
+    bought_month INTEGER, title TEXT);
+CREATE INDEX IF NOT EXISTS ph_idx ON product_history (market, asin, ts);
 CREATE TABLE IF NOT EXISTS niches (
     market TEXT, keyword TEXT, ts REAL, score REAL, data TEXT,
     PRIMARY KEY (market, keyword, ts));
@@ -76,6 +80,20 @@ class DB:
     def save_product(self, market, asin, data):
         self.c.execute("REPLACE INTO products VALUES (?,?,?,?)",
                        (market, asin, time.time(), json.dumps(data)))
+
+    def add_history(self, market, p):
+        """Jeden wpis na książkę na dobę (kolejne uruchomienia tego samego dnia są pomijane)."""
+        last = self.c.execute("SELECT ts FROM product_history WHERE market=? AND asin=? ORDER BY ts DESC LIMIT 1",
+                              (market, p["asin"])).fetchone()
+        if last and time.time() - last[0] < 20 * 3600:
+            return
+        self.c.execute("INSERT INTO product_history VALUES (?,?,?,?,?,?,?,?)",
+                       (market, p["asin"], time.time(), p.get("bsr"), p.get("reviews"), p.get("price"),
+                        p.get("bought_month"), (p.get("title") or "")[:200]))
+
+    def product_history(self, market, asin):
+        return self.c.execute("""SELECT ts, bsr, reviews, price, bought_month, title FROM product_history
+                                 WHERE market=? AND asin=? ORDER BY ts""", (market, asin)).fetchall()
 
     def save_niche(self, market, kw, score, data):
         self.c.execute("INSERT OR REPLACE INTO niches VALUES (?,?,?,?,?)",

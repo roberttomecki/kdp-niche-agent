@@ -41,13 +41,18 @@ def score_niche(products: list[dict], total_results: int | None, factor: float,
     med_bsr = median(bsrs) if bsrs else None
     sellers = sum(1 for s in sales if s >= 0.7)  # ~ BSR 200k na amazon.com
     # „Słabi, a sprzedają”: mało opinii, a dobry BSR -> da się wejść
-    weak_sellers = sum(1 for p in with_bsr if (p.get("reviews") or 0) < 50
-                       and sales_per_day(p["bsr"], factor) >= 0.5)
+    weak_sellers = sum(1 for p in products if (p.get("reviews") or 0) < 50 and (
+        (p.get("bsr") and sales_per_day(p["bsr"], factor) >= 0.5)
+        or (p.get("bought_month") or 0) >= 15))
+    badges = [p["bought_month"] for p in products if p.get("bought_month")]
+    bought_top = sum(badges)
     med_reviews = median(reviews) if reviews else 0
     indie_share = sum(1 for p in products if p.get("indie")) / len(products) if products else 0
 
     n = max(len(products), 1)
     demand = clamp(math.log10(1 + sum(sales)) / 2.0)            # ~100 szt./dzień w top N => 1.0
+    if badges:  # odznaki „bought in past month” to dolna granica – bierz silniejszy sygnał
+        demand = max(demand, clamp(math.log10(1 + bought_top / 30) / 2.0))
     demand_breadth = clamp(sellers / n * 1.5)                     # ilu w top sprzedaje regularnie
     comp_results = clamp((math.log10(total_results) - 2) / 3) if total_results else 0.5  # 100 .. 100k
     comp_reviews = clamp(math.log10(1 + med_reviews) / 3)         # mediana 1000 opinii => 1.0
@@ -68,6 +73,8 @@ def score_niche(products: list[dict], total_results: int | None, factor: float,
         "est_sales_day_median": round(median(sales), 2) if sales else 0,
         "sellers_in_top": sellers,
         "weak_sellers": weak_sellers,
+        "bought_month_top": bought_top,
+        "with_badge": len(badges),
         "median_reviews": med_reviews,
         "median_price": round(median(prices), 2) if prices else None,
         "indie_share": round(indie_share, 2),
