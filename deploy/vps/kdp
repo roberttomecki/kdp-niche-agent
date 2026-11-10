@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Skróty do agenta KDP. Instalacja: sudo bash deploy/vps/install_shortcuts.sh
+DIR=/opt/kdp-niche-agent
+cd "$DIR" || { echo "Brak katalogu $DIR"; exit 1; }
+PY=./venv/bin/python
+
+latest_csv() {
+  local f best=""
+  for f in reports/*.csv; do
+    [[ -e "$f" && "$f" != *keywords* ]] || continue
+    [[ -z "$best" || "$f" -nt "$best" ]] && best=$f
+  done
+  echo "$best"
+}
+
+case "${1:-}" in
+  status|s)
+    echo "== Ostatni przebieg (logs/run.log)"; tail -5 logs/run.log 2>/dev/null || echo "brak logu"
+    echo; echo "== Tunel przez Luckfoxa"
+    ip=$(curl -s -m 10 -x http://127.0.0.1:8888 https://api.ipify.org) && echo "działa, IP: $ip" || echo "NIE DZIAŁA – sprawdź Luckfoxa"
+    echo; echo "== Harmonogram"; crontab -l 2>/dev/null | grep run.sh || echo "brak wpisu w cronie"
+    ;;
+  history|h)
+    shift
+    [ -n "${1:-}" ] || { echo 'Użycie: kdp history "fraza"   albo   kdp history B0XXXXXXXX'; exit 1; }
+    if [[ "$1" =~ ^[A-Z0-9]{10}$ ]]; then $PY kdp_agent.py history --asin "$1"
+    else $PY kdp_agent.py history --keyword "$*"; fi
+    ;;
+  raport|r)
+    f=$(latest_csv); [ -n "$f" ] || { echo "Brak raportów"; exit 1; }
+    echo "== $f"
+    $PY - "$f" "${2:-15}" <<'EOF'
+import csv, sys
+rows = list(csv.DictReader(open(sys.argv[1], encoding="utf-8")))[: int(sys.argv[2])]
+cols = [("keyword", "fraza", 42), ("score", "ocena", 6), ("verdict", "werdykt", 15),
+        ("weak_sellers", "słabi", 6), ("bought_month_top", "kup/mies", 9),
+        ("median_reviews", "opinie", 7), ("median_price", "cena", 6), ("indie_share", "indie", 6)]
+print("  ".join(f"{h:<{w}}" for _, h, w in cols))
+for r in rows:
+    print("  ".join(f"{(r.get(k) or '-')[:w]:<{w}}" for k, _, w in cols))
+EOF
+    ;;
+  run)
+    echo "Uruchamiam w tle pełny przebieg (log: logs/run.log)…"
+    nohup ./run.sh >/dev/null 2>&1 &
+    ;;
+  *)
+    cat <<'EOF'
+Agent KDP – skróty:
+  kdp status            czy ostatni przebieg się udał, czy działa tunel, harmonogram
+  kdp raport [N]        najlepsze nisze z ostatniego raportu (domyślnie 15)
+  kdp history "fraza"   historia BSR/opinii/sprzedaży książek z topu frazy
+  kdp history ASIN      historia jednej książki
+  kdp run               uruchom pełny przebieg teraz (w tle)
+EOF
+    ;;
+esac
