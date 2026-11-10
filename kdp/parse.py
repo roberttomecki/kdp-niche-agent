@@ -47,6 +47,9 @@ def parse_total_results(soup: BeautifulSoup) -> int | None:
     if not text:
         m = re.search(r"\d[\d.,]*\s*-\s*\d+[^<]{0,40}?(\d[\d.,]{2,})", soup.get_text(" ", strip=True))
         return to_int(m.group(1)) if m else None
+    # Tylko część przed wyszukiwaną frazą ("1-16 of over 2,000 results for "sudoku 2027"") –
+    # inaczej liczby z samej frazy (np. rok) brane są za liczbę wyników.
+    text = re.split(r'["\u201c\u201e\u00ab]', text, maxsplit=1)[0]
     nums = [to_int(n) for n in re.findall(r"\d[\d.,]*", text)]
     nums = [n for n in nums if n]
     return max(nums) if nums else None

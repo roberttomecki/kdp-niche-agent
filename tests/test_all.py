@@ -64,3 +64,11 @@ def test_pipeline():
         out = Path(d) / "r.html"; write_html(out, "us", niches, [("a b", "a", 3, 1)], "## test")
         assert "gratitude journal for women" in out.read_text()
         print(json.dumps({k: v for k, v in r.items() if k != "top_products"}, indent=1))
+
+def test_total_results_ignores_numbers_in_query():
+    from bs4 import BeautifulSoup
+    from kdp.parse import parse_total_results
+    h = '<span data-component-type="s-result-info-bar"><span>1-16 of 612 results for</span> <span>"sudoku large print 2027"</span></span>'
+    assert parse_total_results(BeautifulSoup(h, "html.parser")) == 612
+    h = '<span data-component-type="s-result-info-bar"><span>1-48 von über 3.000 Ergebnissen für</span> <span>„kalender 2027“</span></span>'
+    assert parse_total_results(BeautifulSoup(h, "html.parser")) == 3000
