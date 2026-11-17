@@ -36,7 +36,7 @@ class Fetcher:
       KDP_PROXY            - np. http://user:pass@host:port (proxy rezydencjalne)
       KDP_FETCH_TEMPLATE   - np. https://api.scraperapi.com?api_key=KEY&url={url}
                              (zewnętrzne API do scrapowania; url jest kodowany)
-      KDP_DELAY            - bazowe opóźnienie między stronami w s (domyślnie 4)
+      KDP_DELAY            - bazowe opóźnienie między stronami w s (domyślnie 7)
     """
 
     def __init__(self, db: DB, debug_dir: Path | None = None):
@@ -46,7 +46,7 @@ class Fetcher:
         if proxy:
             self.s.proxies = {"http": proxy, "https": proxy}
         self.template = os.getenv("KDP_FETCH_TEMPLATE")
-        self.delay = float(os.getenv("KDP_DELAY", "4"))
+        self.delay = float(os.getenv("KDP_DELAY", "7"))
         self.debug_dir = debug_dir
         self._last = 0.0
         self.blocked_count = 0

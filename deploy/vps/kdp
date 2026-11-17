@@ -34,7 +34,8 @@ import csv, sys
 rows = list(csv.DictReader(open(sys.argv[1], encoding="utf-8")))[: int(sys.argv[2])]
 cols = [("keyword", "fraza", 42), ("score", "ocena", 6), ("verdict", "werdykt", 15),
         ("weak_sellers", "słabi", 6), ("bought_month_top", "kup/mies", 9),
-        ("median_reviews", "opinie", 7), ("median_price", "cena", 6), ("indie_share", "indie", 6)]
+        ("median_reviews", "opinie", 7), ("median_price", "cena", 6), ("indie_share", "indie", 6),
+        ("analyzed_at", "dane z", 10)]
 print("  ".join(f"{h:<{w}}" for _, h, w in cols))
 for r in rows:
     print("  ".join(f"{(r.get(k) or '-')[:w]:<{w}}" for k, _, w in cols))

@@ -101,11 +101,12 @@ class DB:
 
     def latest_niches(self, market):
         rows = self.c.execute("""
-            SELECT n.keyword, n.score, n.data FROM niches n
+            SELECT n.keyword, n.score, n.data, n.ts FROM niches n
             JOIN (SELECT keyword, MAX(ts) ts FROM niches WHERE market=? GROUP BY keyword) l
               ON n.keyword=l.keyword AND n.ts=l.ts
             WHERE n.market=? ORDER BY n.score DESC""", (market, market)).fetchall()
-        return [dict(json.loads(d), keyword=k, score=s) for k, s, d in rows]
+        return [dict(json.loads(d), keyword=k, score=s,
+                     analyzed_at=time.strftime("%Y-%m-%d", time.localtime(t))) for k, s, d, t in rows]
 
     def history(self, market, kw):
         return self.c.execute("SELECT ts, score FROM niches WHERE market=? AND keyword=? ORDER BY ts",

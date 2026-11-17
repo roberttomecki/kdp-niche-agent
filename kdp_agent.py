@@ -9,6 +9,7 @@ Przykłady:
 """
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -60,12 +61,26 @@ def pick_keywords(db, market, top, seeds=None, min_words=2):
 
 
 def do_analyze(f, db, market, keywords, top_n):
+    """Przy blokadzie Amazona robi przerwę (KDP_BLOCK_PAUSE s, domyślnie 20 min) i ponawia tę samą
+    frazę; po KDP_MAX_PAUSES przerwach (domyślnie 3) kończy, zachowując to, co już zebrał."""
     m = get_market(market)
+    pause = int(os.getenv("KDP_BLOCK_PAUSE", "1200"))
+    max_pauses = int(os.getenv("KDP_MAX_PAUSES", "3"))
+    pauses = 0
     for i, (kw, _seed, hits, _pos) in enumerate(keywords, 1):
-        try:
-            r = analyze_keyword(f, db, m, kw, hits=hits, top_n=top_n)
-        except Blocked as e:
-            log.error(str(e)); return False
+        while True:
+            try:
+                r = analyze_keyword(f, db, m, kw, hits=hits, top_n=top_n)
+                break
+            except Blocked as e:
+                if pauses >= max_pauses:
+                    log.error("%s Przerywam po %d przerwach (%d/%d fraz).", e, pauses, i - 1, len(keywords))
+                    return False
+                pauses += 1
+                log.warning("[%s] Blokada Amazona przy '%s' – przerwa %d min (%d/%d), potem ponawiam.",
+                            m.code, kw, pause // 60, pauses, max_pauses)
+                time.sleep(pause)
+                f.blocked_count = 0
         if r:
             log.info("[%s] %d/%d %-45s ocena %5.1f  %s", m.code, i, len(keywords), kw[:45], r["score"], r["verdict"])
     return True

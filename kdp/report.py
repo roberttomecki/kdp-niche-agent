@@ -11,7 +11,8 @@ COLS = [("keyword", "Fraza"), ("score", "Ocena"), ("verdict", "Werdykt"),
         ("weak_sellers", "Słabi, a sprzedają"),
         ("bought_month_top", "Kupione/mies. (top)"), ("with_badge", "Z odznaką"), ("median_reviews", "Mediana opinii"),
         ("median_price", "Mediana ceny"), ("indie_share", "Udział indie"),
-        ("keyword_hits", "Popularność AC"), ("sponsored_count", "Reklam")]
+        ("keyword_hits", "Popularność AC"), ("sponsored_count", "Reklam"),
+        ("analyzed_at", "Dane z dnia")]
 
 
 def write_csv(path: Path, niches: list[dict]):
