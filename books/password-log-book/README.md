@@ -32,13 +32,32 @@ Zmiany (liczba stron na literę, pola, wielkość czcionki) – na górze `make_
 - **Trim size:** 8.5 x 11 in **albo** 6 x 9 in (każdy format to osobna książka)
 - **Bleed:** **Bleed** (zakładki wychodzą do krawędzi)
 - **Cover finish:** matte (lepiej wygląda przy prostych okładkach)
+- **Cover:** „Upload a cover you already have” → odpowiedni `*_cover.pdf`
 - **Manuscript:** odpowiedni plik `*_interior.pdf`
 - Po wgraniu obejrzyj całość w **Previewer** – szczególnie zakładki przy krawędzi.
 
-**Okładka:** grzbiet ≈ 102 × 0,002252" ≈ **0,23"** (biały papier). Przy mniej niż 80 stronach KDP
-nie pozwala na tekst na grzbiecie, przy 102 stronach jest to dozwolone, ale grzbiet jest wąski –
-bezpieczniej zostawić go bez tekstu. Dokładne wymiary okładki: kalkulator/szablon KDP
-(Cover Calculator) dla wybranego formatu i 102 stron.
+## Okładka
+
+```bash
+pip install playwright        # na serwerze/komputerze z Chromium
+python cover/make_cover.py --all --pages 102
+```
+
+Wynik w `output/`: `password-log-book_<format>_cover.pdf` (pełna okładka: tył + grzbiet + przód,
+ze spadem 0,125") i podgląd PNG. Grzbiet ≈ 102 × 0,002252" ≈ 0,23" – bez tekstu (wąski grzbiet).
+Prawy dolny róg tyłu zostaje pusty na kod kreskowy, który dodaje KDP.
+
+| format | wymiary PDF okładki |
+|---|---|
+| 8,5 × 11 | 17,48 × 11,25" |
+| 6 × 9 | 12,48 × 9,25" |
+
+Przed wysyłką porównaj wymiary z szablonem z KDP Cover Calculator; jeśli KDP poda inną szerokość
+grzbietu, zmień stałą `PAPER` albo `--pages` i wygeneruj ponownie.
+
+Projekt: zieleń jak płótno notesu adresowego, krój Atkinson Hyperlegible Next (tworzony z myślą
+o osobach słabowidzących, licencja OFL), kolumna zakładek A–Z jak we wnętrzu z wysuniętą mosiężną
+zakładką „P”, a na przodzie podgląd prawdziwego wpisu z dużą czcionką.
 
 ## Propozycja opisu (do dopracowania)
 
