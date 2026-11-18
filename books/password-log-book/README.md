@@ -57,12 +57,15 @@ grzbietu, zmień stałą `PAPER` albo `--pages` i wygeneruj ponownie.
 
 Projekt: zieleń jak płótno notesu adresowego, krój Atkinson Hyperlegible Next (tworzony z myślą
 o osobach słabowidzących, licencja OFL), kolumna zakładek A–Z jak we wnętrzu z wysuniętą mosiężną
-zakładką „P”, a na przodzie podgląd prawdziwego wpisu z dużą czcionką.
+zakładką „P”, wyeksponowane „Large Print”, uczciwy podtytuł o nadrukowanym indeksie, a na przodzie podgląd prawdziwego wpisu z dużą czcionką.
 
 ## Propozycja opisu (do dopracowania)
 
 **Title:** Password Log Book Large Print
-**Subtitle:** Easy-to-Read Internet Address and Password Organizer for Seniors with Alphabetical Tabs
+**Subtitle:** Easy-to-Read Internet Address and Password Organizer for Seniors with a Printed A–Z Index
+
+W opisie produktu napisz wprost, że indeks A–Z jest **nadrukowany na brzegu stron (bez wycinanych przekładek)** –
+kupujący znają notesy z prawdziwymi przekładkami (Clever Fox, JUBTIC) i inaczej mogą się rozczarować.
 
 **7 pól słów kluczowych (backend)** – bez słów, które już są w tytule i podtytule
 (Amazon i tak je indeksuje):

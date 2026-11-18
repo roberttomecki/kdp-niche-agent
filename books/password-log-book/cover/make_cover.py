@@ -78,7 +78,7 @@ def html(trim: str, pages: int) -> tuple[str, float, float]:
         <p class="lead">Every login in one place you can actually read.</p>
         <ul>
           <li>Big, clear print and wide lines to write on</li>
-          <li>A&#8211;Z tabs printed on the page edge, so the book opens straight to the right letter</li>
+          <li>An A&#8211;Z index printed on the page edge (no cut tabs), so the book opens near the right letter</li>
           <li>Room for {f['accounts']} websites, with two spare lines for new passwords</li>
           <li>Pages for email accounts and home <span style="white-space:nowrap">Wi-Fi</span></li>
         </ul>
@@ -88,7 +88,8 @@ def html(trim: str, pages: int) -> tuple[str, float, float]:
       <div class="front" style="left:{front_x + safe:.3f}in;top:{BLEED + safe + 0.15:.3f}in;
            width:{text_right - front_x - safe:.3f}in;height:{f['h'] - 2 * safe - 0.3:.3f}in">
         <h1>Password<br>Log Book</h1>
-        <p class="sub">Large print with A&#8211;Z tabs</p>
+        <p class="lp">Large Print</p>
+        <p class="sub">With a printed A&#8211;Z index on the page edge</p>
         <div class="card">
           <div class="card-letter">P</div>
           <div class="row"><b>Website:</b><i></i></div>
@@ -110,7 +111,9 @@ html, body {{ margin: 0; padding: 0; }}
         border-radius: 0.07in 0 0 0.07in; box-sizing: border-box; }}
 .front {{ position: absolute; display: flex; flex-direction: column; }}
 h1 {{ margin: 0; font-weight: 800; font-size: {f['title']:.3f}in; line-height: 0.98; letter-spacing: -0.01em; }}
-.sub {{ margin: {f['sub'] * 0.9:.3f}in 0 0; font-size: {f['sub']:.3f}in; font-weight: 400; color: {C['muted']}; }}
+.lp {{ margin: {f['sub'] * 0.7:.3f}in 0 0; font-size: {f['title'] * 0.5:.3f}in; font-weight: 700;
+       line-height: 1; color: {C['brass']}; }}
+.sub {{ margin: {f['sub'] * 0.55:.3f}in 0 0; font-size: {f['sub']:.3f}in; font-weight: 400; color: {C['muted']}; }}
 .foot {{ margin-top: auto; margin-bottom: 0; font-size: {body * 1.2:.3f}in; line-height: 1.35;
          max-width: 80%; color: {C['muted']}; }}
 .card {{ margin-top: {f['sub'] * 1.6:.3f}in; background: {C['text']}; color: {C['ground']};
