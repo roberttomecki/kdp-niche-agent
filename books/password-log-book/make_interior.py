@@ -59,8 +59,8 @@ class Spec:
 
 
 SPECS = {
-    "8.5x11": Spec(8.5, 11.0, entries_per_page=3, label_size=16, letter_size=40, tab_w=0.42, tab_font=16),
-    "6x9": Spec(6.0, 9.0, entries_per_page=2, label_size=16, letter_size=32, tab_w=0.34, tab_font=16),
+    "8.5x11": Spec(8.5, 11.0, entries_per_page=3, label_size=16, letter_size=40, tab_w=0.62, tab_font=16),
+    "6x9": Spec(6.0, 9.0, entries_per_page=2, label_size=16, letter_size=32, tab_w=0.62, tab_font=16),
 }
 
 
@@ -120,7 +120,11 @@ class Book:
         c.rect(rx, ty + 1, rw, h - 2, stroke=0, fill=1)
         c.setFillColor(white)
         c.setFont("Sans-Bold", self.s.tab_font)
-        cx = (x1 - w / 2) if self.recto else (x0 + w / 2)
+        # KDP: tekst musi być ≥ 0.375" od linii cięcia – litera siedzi przy wewnętrznym brzegu
+        # zakładki, a część zakładki bliżej krawędzi (i spad) zostaje bez tekstu.
+        safe = (0.375 + 0.03) * INCH
+        lw = pdfmetrics.stringWidth(label, "Sans-Bold", self.s.tab_font)
+        cx = (x1 - safe - lw / 2) if self.recto else (x0 + safe + lw / 2)
         c.drawCentredString(cx, ty + h / 2 - self.s.tab_font * 0.36, label)
 
     def lines_page(self, heading: str):
