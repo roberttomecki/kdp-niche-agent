@@ -35,8 +35,8 @@ C = {
 }
 
 FORMATS = {
-    "8.5x11": dict(w=8.5, h=11.0, accounts=270, title=1.25, sub=0.30, body=0.165, tab_w=0.48, tab_font=0.15),
-    "6x9": dict(w=6.0, h=9.0, accounts=180, title=0.90, sub=0.23, body=0.135, tab_w=0.38, tab_font=0.12),
+    "8.5x11": dict(w=8.5, h=11.0, accounts=270, title=1.25, sub=0.30, body=0.165, tab_w=0.62, tab_font=0.15),
+    "6x9": dict(w=6.0, h=9.0, accounts=180, title=0.90, sub=0.23, body=0.135, tab_w=0.56, tab_font=0.12),
 }
 
 
@@ -60,13 +60,14 @@ def html(trim: str, pages: int) -> tuple[str, float, float]:
         bg = C["brass"] if pulled else (C["tab_a"] if i % 2 == 0 else C["tab_b"])
         ink = C["brass_ink"] if pulled else C["tab_ink"]
         fs = f["tab_font"] * (1.35 if pulled else 1.0)
-        # litera wyśrodkowana w widocznej (po przycięciu) części zakładki
-        span_style = "" if pulled else f"width:{f['tab_w']:.3f}in;text-align:center"
+        # litera ≥ 0.3" od linii cięcia (cięcie może się przesunąć o ~0.125"):
+        # siedzi przy wewnętrznym brzegu zakładki, a nie na jej środku
+        span_style = "" if pulled else f"width:{f['tab_w'] - 0.30:.3f}in;text-align:center"
         tabs.append(
             f'<div class="tab" style="left:{left:.4f}in;top:{top + i * th + 0.012:.4f}in;'
             f'width:{w + BLEED + 0.05:.4f}in;height:{th - 0.024:.4f}in;background:{bg};color:{ink};'
             f'font-size:{fs:.3f}in;padding-left:{(f["tab_w"] * 0.5 if pulled else 0):.3f}in;'
-            f'justify-content:{"flex-start" if pulled else "center"}">'
+            f'justify-content:flex-start">'
             f'<span style="{span_style}">{L}</span></div>')
     # zakładka P po wysunięciu nachodzi na przód – przesuwamy tekst, by go nie dotykała
     text_right = W - BLEED - f["tab_w"] * 1.9 - 0.35
