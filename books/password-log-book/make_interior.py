@@ -59,8 +59,8 @@ class Spec:
 
 
 SPECS = {
-    "8.5x11": Spec(8.5, 11.0, entries_per_page=3, label_size=15, letter_size=40, tab_w=0.42, tab_font=13),
-    "6x9": Spec(6.0, 9.0, entries_per_page=2, label_size=13, letter_size=32, tab_w=0.34, tab_font=10),
+    "8.5x11": Spec(8.5, 11.0, entries_per_page=3, label_size=16, letter_size=40, tab_w=0.42, tab_font=16),
+    "6x9": Spec(6.0, 9.0, entries_per_page=2, label_size=16, letter_size=32, tab_w=0.34, tab_font=16),
 }
 
 
@@ -204,7 +204,7 @@ class Book:
             c.drawCentredString(mid, y, line)
             y -= big * 1.15
         c.setFont("Sans", self.s.label_size + 2)
-        c.drawCentredString(mid, y - 10, "Large Print  •  Alphabetical Tabs")
+        c.drawCentredString(mid, y - 10, "Large Print  •  A–Z Edge Index")
         # pole „This book belongs to”
         c.setFont("Sans-Bold", self.s.label_size)
         yb = y0 + (self.s.trim_h * 0.28) * INCH
@@ -217,14 +217,15 @@ class Book:
         cx0, cy0, cx1, cy1 = self.content_box(with_tab=False)
         c = self.c
         c.setFillColor(GREY_LABEL)
-        c.setFont("Sans", 9)
+        c.setFont("Sans", 16)
         lines = [self.title, f"Copyright © 2026 {self.author}. All rights reserved.",
-                 "No part of this publication may be reproduced without permission.",
+                 "No part of this book may be copied without permission.",
                  "Keep this book in a safe, private place."]
-        y = cy0 + 60
-        for ln in lines:
+        wrapped = [w for ln in lines for w in wrap(ln, "Sans", 16, cx1 - cx0)]
+        y = cy0 + 21 * len(wrapped)
+        for ln in wrapped:
             c.drawString(cx0, y, ln)
-            y -= 13
+            y -= 21
 
     def save(self):
         self.c.save()

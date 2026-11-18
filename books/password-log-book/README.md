@@ -23,11 +23,14 @@ wskazówki bezpieczeństwa, strony „Email Accounts” i „Home Internet & Wi-
 Pola wpisu: Website, Login / Email, Password, 2 × New password, Notes. Czarne zakładki z literą
 drukowane na krawędzi tworzą indeks widoczny z boku zamkniętej książki.
 
+Cała treść ma co najmniej 16 pt – warunek KDP, żeby zaznaczyć „Large-print book”.
+
 Zmiany (liczba stron na literę, pola, wielkość czcionki) – na górze `make_interior.py`
 (`SECTIONS`, `FIELDS`, `SPECS`).
 
 ## Ustawienia przy publikacji w KDP (Paperback)
 
+- **Paperback Details:** zaznacz **Low-content book** i **Large-print book**
 - **Ink and paper:** Black & white interior, **white paper**
 - **Trim size:** 8.5 x 11 in **albo** 6 x 9 in (każdy format to osobna książka)
 - **Bleed:** **Bleed** (zakładki wychodzą do krawędzi)
