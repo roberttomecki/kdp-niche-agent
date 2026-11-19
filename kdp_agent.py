@@ -20,6 +20,7 @@ from kdp.db import DB
 from kdp.discover import expand_seed
 from kdp.http import Blocked, Fetcher
 from kdp.markets import get_market
+from kdp.screen import latest_screens, screen_keywords
 from kdp.report import write_csv, write_html, write_json, write_keywords_csv
 
 log = logging.getLogger("kdp")
@@ -31,7 +32,15 @@ def load_seeds(args) -> list[str]:
     if args.seeds:
         seeds += [l.strip() for l in Path(args.seeds).read_text(encoding="utf-8").splitlines()
                   if l.strip() and not l.startswith("#")]
-    return list(dict.fromkeys(s.lower() for s in seeds))
+    seeds = list(dict.fromkeys(s.lower() for s in seeds))
+    n = getattr(args, "rotate", 0) or 0
+    if n and len(seeds) > n:
+        # co tydzień inna porcja listy: tydzień ISO wyznacza początek okna
+        week = int(time.strftime("%V")) + 53 * int(time.strftime("%G"))
+        start = (week * n) % len(seeds)
+        seeds = (seeds + seeds)[start:start + n]
+        log.info("Rotacja: w tym tygodniu %d z listy seedów (od pozycji %d)", n, start + 1)
+    return seeds
 
 
 def do_discover(f, db, market, seeds, deep):
@@ -148,6 +157,9 @@ def main():
     h.add_argument("--keyword", help="fraza z raportu – pokaże książki z jej topu")
     h.add_argument("--asin", action="append", help="konkretny ASIN (można wiele razy)")
 
+    sc = sub.add_parser("screens", help="najlepsze frazy z ostatniego przesiewu"); common(sc, seeds=False)
+    sc.add_argument("--limit", type=int, default=30)
+
     r = sub.add_parser("report", help="wygeneruj raport"); common(r, seeds=False)
     r.add_argument("--ai", action="store_true", help="dodaj wnioski Claude (ANTHROPIC_API_KEY)")
 
@@ -156,6 +168,11 @@ def main():
     run.add_argument("--per-keyword", type=int, default=10)
     run.add_argument("--rounds", type=int, default=1, help="rundy z nowymi seedami od Claude")
     run.add_argument("--deep", action="store_true")
+    run.add_argument("--screen", type=int, default=0,
+                     help="przesiej najpierw tyle fraz (1 strona wyników na frazę), "
+                          "a pełną analizę zrób dla --top najlepszych z przesiewu")
+    run.add_argument("--rotate", type=int, default=0,
+                     help="użyj tylko tylu seedów z listy, co tydzień innych")
     run.add_argument("--no-ai", action="store_true")
 
     args = p.parse_args()
@@ -174,6 +191,12 @@ def main():
         elif args.cmd == "analyze":
             seeds = load_seeds(args) or None
             do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword)
+        elif args.cmd == "screens":
+            rows = latest_screens(db, market, args.limit)
+            print(f"{'fraza':42} {'przesiew':>8} {'kup/mies':>9} {'słabe':>6} {'słabe+odzn.':>11} {'opinie':>7} {'wyniki':>8}  data")
+            for k, s, d, t in rows:
+                print(f"{k[:42]:42} {s:8.1f} {d['badges_sum']:9} {d['low_review_books']:6} {d['low_with_badge']:11} "
+                      f"{d['median_reviews']:7.0f} {d['total_results'] or '-':>8}  {time.strftime('%Y-%m-%d', time.localtime(t))}")
         elif args.cmd == "history":
             show_history(db, market, args.keyword, args.asin)
         elif args.cmd == "report":
@@ -190,7 +213,18 @@ def main():
             for rnd in range(1, args.rounds + 1):
                 log.info("=== [%s] runda %d, seedy: %s", market, rnd, ", ".join(seeds))
                 do_discover(f, db, market, seeds, args.deep)
-                if not do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword):
+                chosen = pick_keywords(db, market, args.top, seeds)
+                if args.screen:
+                    try:
+                        ranked = screen_keywords(f, db, get_market(market),
+                                                 pick_keywords(db, market, args.screen, seeds))
+                    except Blocked as e:
+                        log.error("Przesiew przerwany: %s", e); ranked = []
+                    if ranked:
+                        chosen = [kw for _, kw, _ in ranked[:args.top]]
+                        log.info("[%s] przesiew: %d fraz, do pełnej analizy %d (najlepsza: %s, %.1f)",
+                                 market, len(ranked), len(chosen), ranked[0][1][0], ranked[0][0])
+                if not do_analyze(f, db, market, chosen, args.per_keyword):
                     break
                 if not use_ai:
                     break  # bez AI nie ma nowych seedów – kolejna runda nic nie wniesie

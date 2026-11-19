@@ -59,6 +59,16 @@ Na rynkach DE/FR/IT/ES seedy wpisuj w języku rynku (`dankbarkeitstagebuch`, `ca
   ./venv/bin/python kdp_agent.py history --asin B0XXXXXXXX
   ```
 
+## Przesiew i rotacja fraz (domyślnie w run.sh)
+
+- `--rotate 10` – z dużej listy `seeds.txt` agent bierze co tydzień inne 10 fraz bazowych
+  (lista ~70 pomysłów w `seeds.example.txt`), więc w kilka tygodni przechodzi setki nisz.
+- `--screen 120` – najpierw szybki przesiew 120 fraz: tylko 1 strona wyników na frazę
+  (liczba wyników, opinie, ceny, odznaki „bought in past month”), a pełna analiza z BSR
+  tylko dla `--top 30` najlepszych. Obciążenie Amazona podobne jak wcześniej.
+- Wyniki przesiewu: `kdp przesiew` (albo `kdp_agent.py screens`).
+- Zmienne w `.env`: `ROTATE`, `SCREEN`, `TOP`.
+
 ## Cron (np. co poniedziałek o 3:17)
 
 ```

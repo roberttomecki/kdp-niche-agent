@@ -41,6 +41,9 @@ for r in rows:
     print("  ".join(f"{(r.get(k) or '-')[:w]:<{w}}" for k, _, w in cols))
 EOF
     ;;
+  przesiew|p)
+    $PY kdp_agent.py screens --limit "${2:-30}"
+    ;;
   luckfox|l)
     exec ssh luckfox
     ;;
@@ -53,6 +56,7 @@ EOF
 Agent KDP – skróty:
   kdp status            czy ostatni przebieg się udał, czy działa tunel, harmonogram
   kdp raport [N]        najlepsze nisze z ostatniego raportu (domyślnie 15)
+  kdp przesiew [N]      najlepsze frazy z szybkiego przesiewu (kandydaci, domyślnie 30)
   kdp history "fraza"   historia BSR/opinii/sprzedaży książek z topu frazy
   kdp history ASIN      historia jednej książki
   kdp run               uruchom pełny przebieg teraz (w tle)

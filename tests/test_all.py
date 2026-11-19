@@ -97,3 +97,19 @@ def test_badge_in_serp_and_history():
         assert len(h) == 1 and h[0][4] == 200
         analyze.analyze_keyword(F(), db, get_market("us"), "gratitude journal for kids", hits=5)
         assert len(db.product_history("us", "B0BBBB0002")) == 1  # max 1 wpis na dobę
+
+def test_screen_and_rotation():
+    from kdp.screen import screen_score, screen_keywords, latest_screens
+    hot = [{"sponsored": False, "reviews": 12, "bought_month": 200}] * 4 + [{"sponsored": False, "reviews": 900}] * 6
+    cold = [{"sponsored": False, "reviews": 3000}] * 10
+    assert screen_score(hot, 2000, 10)["score"] > screen_score(cold, 60000, 10)["score"]
+    with tempfile.TemporaryDirectory() as d:
+        db = DB(Path(d) / "s.sqlite")
+        ranked = screen_keywords(FakeFetcher(), db, get_market("us"), [("a b", "a", 3, 1), ("c d", "c", 9, 1)])
+        assert len(ranked) == 2 and latest_screens(db, "us")[0][0] in ("a b", "c d")
+    import types, kdp_agent
+    p = Path(d if False else tempfile.mkdtemp()) / "seeds.txt"
+    p.write_text("\n".join(f"s{i}" for i in range(25)))
+    a = types.SimpleNamespace(seed=None, seeds=str(p), rotate=10)
+    got = kdp_agent.load_seeds(a)
+    assert len(got) == 10 and len(set(got)) == 10

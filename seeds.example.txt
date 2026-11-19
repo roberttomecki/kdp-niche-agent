@@ -1,9 +1,84 @@
-# Frazy bazowe – jedna na linię (low-content)
-gratitude journal
+# Frazy bazowe – jedna na linię (low-content, amazon.com).
+# Przy --rotate 10 agent bierze co tydzień kolejne 10 fraz z tej listy.
+# Pomysł na nowe frazy: kto regularnie coś zapisuje? (hobby, zawód, dom, zdrowie, zwierzęta)
+
+# --- już sprawdzone / obserwowane ---
 password log book
+gratitude journal
 dot grid notebook
 budget planner
 coloring book for adults
 sudoku large print
 reading log
 fishing log book
+
+# --- dom i finanse ---
+home maintenance log book
+bill payment organizer
+address book large print
+emergency contact book
+recipe journal to write in
+meal planner notebook
+cleaning schedule planner
+garden planner journal
+moving checklist planner
+wedding planner organizer
+
+# --- zdrowie i samopoczucie (bez obietnic medycznych) ---
+blood pressure log book
+blood sugar log book
+medication log book
+food diary journal
+sleep log journal
+workout log book
+symptom tracker journal
+pregnancy journal
+
+# --- zwierzęta ---
+dog health record book
+cat care journal
+horse care log book
+chicken keeping journal
+aquarium log book
+
+# --- hobby ---
+bird watching journal
+hiking log book
+camping journal
+travel journal for kids
+wine tasting journal
+beer tasting notebook
+tea tasting journal
+knitting journal
+crochet pattern notebook
+quilting planner
+woodworking project planner
+guitar tab notebook
+golf score log book
+hunting log book
+stamp collecting log
+coin collecting log book
+genealogy family tree workbook
+
+# --- pojazdy i praca ---
+vehicle mileage log book
+car maintenance log book
+truck driver log book
+boat log book
+pilot log book
+rv maintenance log
+babysitter notebook
+caregiver log book
+daycare daily report
+teacher planner
+nurse report sheet notebook
+small business bookkeeping ledger
+inventory log book
+visitor sign in book
+
+# --- łamigłówki i aktywności ---
+word search large print
+crossword puzzle book for seniors
+activity book for seniors with dementia
+dot to dot for adults
+mazes for kids
