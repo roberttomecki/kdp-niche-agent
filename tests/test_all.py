@@ -58,7 +58,7 @@ def test_pipeline():
     with tempfile.TemporaryDirectory() as d:
         db = DB(Path(d) / "t.sqlite")
         r = analyze.analyze_keyword(FakeFetcher(), db, m, "gratitude journal for women", hits=20, top_n=10)
-        assert r["analyzed"] == 3 and r["sponsored_count"] == 1 and r["median_bsr"] == 48213
+        assert r["analyzed"] == 6 and r["sponsored_count"] == 1 and r["median_bsr"] == 48213
         niches = db.latest_niches("us")
         assert niches[0]["keyword"] == "gratitude journal for women"
         out = Path(d) / "r.html"; write_html(out, "us", niches, [("a b", "a", 3, 1)], "## test")
@@ -85,7 +85,8 @@ def test_badge_in_serp_and_history():
     html = (FX / "serp.html").read_text().replace(
         "<span>23</span></a>", "<span>23</span></a><span>200+ bought in past month</span>")
     r = parse_serp(html)
-    assert [i["bought_month"] for i in r["items"]] == [None, None, 200, None]
+    assert [i["bought_month"] for i in r["items"]][:4] == [None, None, 200, None]
+    assert r["items"][-1]["is_book"] is False and r["items"][1]["is_book"] is True
     class F(FakeFetcher):
         def get_html(self, url, lang, ttl_h=72):
             return html if "/s?" in url else (FX / "product_us.html").read_text()
@@ -113,3 +114,8 @@ def test_screen_and_rotation():
     a = types.SimpleNamespace(seed=None, seeds=str(p), rotate=10)
     got = kdp_agent.load_seeds(a)
     assert len(got) == 10 and len(set(got)) == 10
+
+def test_non_book_results_skipped():
+    from kdp.screen import screen_score
+    mats = [{"sponsored": False, "reviews": 0, "bought_month": 1000, "is_book": False}] * 10
+    assert screen_score(mats, 11, 5)["score"] == 0.0

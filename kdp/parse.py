@@ -74,6 +74,13 @@ def parse_bought(text: str) -> int | None:
     return n * mult if n else None
 
 
+# Format książki na karcie wyniku. Gdy w dziale Books brak wyników, Amazon po cichu pokazuje
+# produkty ze wszystkich działów (podkładki, kolczyki…) – takie karty nie mają formatu książki.
+BOOK_FORMAT_RE = re.compile(
+    r"\b(Paperback|Hardcover|Spiral-bound|Kindle|Board book|Mass Market|Loose Leaf|Audible|Audio CD"
+    r"|Taschenbuch|Gebundene Ausgabe|Broché|Relié|Copertina flessibile|Copertina rigida|Tapa blanda|Tapa dura)\b")
+
+
 def parse_serp(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
     items = []
@@ -100,7 +107,8 @@ def parse_serp(html: str) -> dict:
         items.append({"pos": pos, "asin": asin, "title": title, "sponsored": sponsored,
                       "price": to_price(price_el.get_text()) if price_el else None,
                       "reviews": reviews or 0, "rating": rating,
-                      "bought_month": parse_bought(text)})
+                      "bought_month": parse_bought(text),
+                      "is_book": bool(BOOK_FORMAT_RE.search(text))})
     return {"total_results": parse_total_results(soup), "items": items}
 
 

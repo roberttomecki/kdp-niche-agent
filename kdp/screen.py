@@ -24,7 +24,12 @@ SCHEMA = """CREATE TABLE IF NOT EXISTS screens (
 
 
 def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
-    org = [i for i in items if not i["sponsored"]][:16]
+    org_all = [i for i in items if not i["sponsored"]][:16]
+    org = [i for i in org_all if i.get("is_book", True)]
+    if len(org) < 5:
+        return {"score": 0.0, "badges_sum": 0, "with_badge": 0, "low_review_books": len(org),
+                "low_with_badge": 0, "median_reviews": 0, "total_results": total, "keyword_hits": hits,
+                "sponsored": len(items) - len(org_all), "not_books": True}
     reviews = [i.get("reviews") or 0 for i in org]
     badges = [i["bought_month"] for i in org if i.get("bought_month")]
     low = [i for i in org if (i.get("reviews") or 0) < 50]
@@ -39,7 +44,7 @@ def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
     score += 8 * min(low_badge, 2)  # słaba książka z odznaką sprzedaży – najmocniejszy sygnał
     return {"score": round(min(score, 100), 1), "badges_sum": sum(badges), "with_badge": len(badges),
             "low_review_books": len(low), "low_with_badge": low_badge, "median_reviews": med_rev,
-            "total_results": total, "keyword_hits": hits, "sponsored": len(items) - len(org)}
+            "total_results": total, "keyword_hits": hits, "sponsored": len(items) - len(org_all)}
 
 
 def screen_keywords(f: Fetcher, db: DB, m: Market, keywords: list[tuple]) -> list[tuple]:
