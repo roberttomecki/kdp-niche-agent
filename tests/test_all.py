@@ -136,3 +136,8 @@ def test_tiny_result_sets_penalised():
     from kdp.screen import screen_score
     items = [{"sponsored": False, "reviews": 2, "bought_month": None, "is_book": True}] * 10
     assert screen_score(items, 7, 5)["score"] < screen_score(items, 3000, 5)["score"] / 2
+
+def test_deep_score_tiny_results():
+    p = [{"bsr": 40_000, "reviews": 3, "price": 9, "indie": True}] * 8
+    r = score_niche(p, 13, 1.0, 5)
+    assert r["verdict"] == "za mało wyników" and r["score"] < score_niche(p, 5000, 1.0, 5)["score"]

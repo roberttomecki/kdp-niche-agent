@@ -62,6 +62,8 @@ def score_niche(products: list[dict], total_results: int | None, factor: float,
     score = 100 * (0.25 * demand + 0.15 * demand_breadth + 0.25 * opportunity
                    + 0.10 * popularity + 0.10 * indie_share
                    - 0.10 * comp_results - 0.15 * comp_reviews + 0.25) / 1.1
+    if total_results and total_results < 300:  # przypadkowa zbitka słów, nie nisza
+        score *= max(0.2, total_results / 300)
     score = round(clamp(score, 0, 100), 1)
 
     return {
@@ -79,7 +81,8 @@ def score_niche(products: list[dict], total_results: int | None, factor: float,
         "median_price": round(median(prices), 2) if prices else None,
         "indie_share": round(indie_share, 2),
         "keyword_hits": keyword_hits,
-        "verdict": verdict(score, weak_sellers, demand),
+        "verdict": ("za mało wyników" if total_results and total_results < 300
+                    else verdict(score, weak_sellers, demand)),
     }
 
 
