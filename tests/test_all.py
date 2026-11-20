@@ -141,3 +141,13 @@ def test_deep_score_tiny_results():
     p = [{"bsr": 40_000, "reviews": 3, "price": 9, "indie": True}] * 8
     r = score_niche(p, 13, 1.0, 5)
     assert r["verdict"] == "za mało wyników" and r["score"] < score_niche(p, 5000, 1.0, 5)["score"]
+
+def test_watchlist_tracking():
+    import kdp_agent
+    with tempfile.TemporaryDirectory() as d:
+        w = Path(d) / "watch.txt"; w.write_text("# x\nb0bbbb0002 Moja książka\n")
+        assert kdp_agent.load_watchlist(w) == [("B0BBBB0002", "Moja książka")]
+        db = DB(Path(d) / "w.sqlite")
+        kdp_agent.track_watchlist(FakeFetcher(), db, "us", w)
+        h = db.product_history("us", "B0BBBB0002")
+        assert len(h) == 1 and h[0][1] == 48213

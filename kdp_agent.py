@@ -25,6 +25,7 @@ from kdp.report import write_csv, write_html, write_json, write_keywords_csv
 
 log = logging.getLogger("kdp")
 ROOT = Path(__file__).resolve().parent
+WATCH = Path(os.getenv("KDP_WATCH", str(ROOT / "watch.txt")))
 
 
 def load_seeds(args) -> list[str]:
@@ -95,6 +96,41 @@ def do_analyze(f, db, market, keywords, top_n):
     return True
 
 
+def load_watchlist(path: Path) -> list[tuple[str, str]]:
+    """watch.txt: jedna książka na linię – ASIN, a po nim opcjonalnie nazwa."""
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        asin, _, label = line.partition(" ")
+        out.append((asin.upper(), label.strip()))
+    return out
+
+
+def track_watchlist(f, db, market, path: Path):
+    """Zapisz dzisiejszy BSR, opinie i cenę Twoich książek (maks. raz na dobę)."""
+    from kdp.parse import parse_product
+    m = get_market(market)
+    for asin, label in load_watchlist(path):
+        try:
+            page = f.get_html(f"{m.base_url}/dp/{asin}", m.lang, ttl_h=20)
+        except Blocked as e:
+            log.error("Śledzenie przerwane: %s", e)
+            return
+        if not page:
+            log.warning("[%s] %s: nie udało się pobrać strony", m.code, asin)
+            continue
+        p = parse_product(page)
+        p["asin"] = asin
+        p["title"] = p.get("title") or label
+        db.add_history(m.code, p)
+        db.commit()
+        log.info("[%s] moja książka %s: BSR %s, opinie %s", m.code, label or asin, p.get("bsr"), p.get("reviews"))
+
+
 def do_report(db, market, out_dir: Path, advice=None):
     out_dir.mkdir(parents=True, exist_ok=True)
     niches = db.latest_niches(market)
@@ -160,6 +196,9 @@ def main():
     h.add_argument("--keyword", help="fraza z raportu – pokaże książki z jej topu")
     h.add_argument("--asin", action="append", help="konkretny ASIN (można wiele razy)")
 
+    tr = sub.add_parser("track", help="zapisz dziś BSR/opinie Twoich książek z watch.txt"); common(tr, seeds=False)
+    mine = sub.add_parser("mine", help="historia Twoich książek z watch.txt"); common(mine, seeds=False)
+
     sc = sub.add_parser("screens", help="najlepsze frazy z ostatniego przesiewu"); common(sc, seeds=False)
     sc.add_argument("--limit", type=int, default=30)
 
@@ -194,6 +233,14 @@ def main():
         elif args.cmd == "analyze":
             seeds = load_seeds(args) or None
             do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword)
+        elif args.cmd == "track":
+            track_watchlist(f, db, market, WATCH)
+        elif args.cmd == "mine":
+            books = load_watchlist(WATCH)
+            if not books:
+                print(f"Brak książek w {WATCH}. Dopisz: ASIN nazwa (jedna na linię).")
+            else:
+                show_history(db, market, asins=[a for a, _ in books])
         elif args.cmd == "screens":
             rows = latest_screens(db, market, args.limit)
             print(f"{'fraza':42} {'przesiew':>8} {'kup/mies':>9} {'słabe':>6} {'słabe+odzn.':>11} {'opinie':>7} {'wyniki':>8}  data")
@@ -236,6 +283,7 @@ def main():
                     seeds = [s for s in new if not db.keywords(market, seed=s)]
                     if not seeds:
                         break
+            track_watchlist(f, db, market, WATCH)
             do_report(db, market, out, advice)
 
 

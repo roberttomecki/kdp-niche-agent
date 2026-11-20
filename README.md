@@ -69,6 +69,12 @@ Na rynkach DE/FR/IT/ES seedy wpisuj w języku rynku (`dankbarkeitstagebuch`, `ca
 - Wyniki przesiewu: `kdp przesiew` (albo `kdp_agent.py screens`).
 - Zmienne w `.env`: `ROTATE`, `SCREEN`, `TOP`.
 
+## Twoje książki (watch.txt)
+
+`watch.txt` – Twoje opublikowane książki, jedna na linię: `ASIN nazwa` (wzór: `watch.example.txt`).
+Przy każdym przebiegu `run` agent zapisuje ich BSR, opinie i cenę (maks. raz na dobę).
+Podgląd: `kdp moje` (albo `kdp_agent.py mine`), ręczny zapis: `kdp_agent.py track`.
+
 ## Cron (np. co poniedziałek o 3:17)
 
 ```
