@@ -139,6 +139,7 @@ def parse_product(html: str) -> dict:
         pages = int(m.group(1))
     title_el = soup.select_one("#productTitle")
     rev_el = soup.select_one("#acrCustomerReviewText")
+    price_el = soup.select_one("#corePrice_feature_div .a-offscreen, #price, .a-price .a-offscreen")
     date = None
     m = re.search(r"(?:Publication date|Erscheinungstermin|Date de publication|Data di pubblicazione|Fecha de publicación)\s*[:‏‎ ]*([^:]{6,25}?\d{4})", details)
     if m:
@@ -146,7 +147,9 @@ def parse_product(html: str) -> dict:
     return {
         "title": title_el.get_text(" ", strip=True) if title_el else None,
         "bsr": bsr,
-        "reviews": to_int(rev_el.get_text()) if rev_el else None,
+        # strona książki bez sekcji opinii = 0 opinii (nowa książka)
+        "reviews": to_int(rev_el.get_text()) if rev_el else (0 if title_el else None),
+        "price": to_price(price_el.get_text()) if price_el else None,
         "pages": pages,
         "pub_date": date,
         "indie": any(x in details for x in INDIE_MARKERS),
