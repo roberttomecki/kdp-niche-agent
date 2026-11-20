@@ -42,6 +42,10 @@ def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
     score = 100 * (0.35 * demand + 0.25 * entry + 0.20 * (1 - competition)
                    + 0.10 * (1 - crowd) + 0.10 * clamp(hits / 15))
     score += 8 * min(low_badge, 2)  # słaba książka z odznaką sprzedaży – najmocniejszy sygnał
+    # Bardzo mało wyników = przypadkowe połączenie słów z podpowiedzi („guitar tab stroller”),
+    # a nie nisza, której ktoś szuka – takie frazy nie mogą wygrywać przesiewu.
+    if total and total < 300:
+        score *= max(0.2, total / 300)
     return {"score": round(min(score, 100), 1), "badges_sum": sum(badges), "with_badge": len(badges),
             "low_review_books": len(low), "low_with_badge": low_badge, "median_reviews": med_rev,
             "total_results": total, "keyword_hits": hits, "sponsored": len(items) - len(org_all)}

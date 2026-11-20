@@ -131,3 +131,8 @@ def test_stale_non_book_niche_removed():
         db.save_niche("us", "coin desk mat", 99, {"verdict": "x"}); db.commit()
         screen_keywords(F(), db, get_market("us"), [("coin desk mat", "coin", 1, 1)])
         assert db.latest_niches("us") == []
+
+def test_tiny_result_sets_penalised():
+    from kdp.screen import screen_score
+    items = [{"sponsored": False, "reviews": 2, "bought_month": None, "is_book": True}] * 10
+    assert screen_score(items, 7, 5)["score"] < screen_score(items, 3000, 5)["score"] / 2
