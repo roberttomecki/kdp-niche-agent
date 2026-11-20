@@ -107,7 +107,10 @@ def do_report(db, market, out_dir: Path, advice=None):
     write_html(base.with_suffix(".html"), market, niches, keywords, advice)
     if advice:
         base.with_suffix(".md").write_text(advice, encoding="utf-8")
-    log.info("Raport: %s.html", base)
+    # stała nazwa najnowszego raportu – łatwo ją pobrać (scp …/reports/latest_<rynek>.html)
+    import shutil
+    shutil.copyfile(base.with_suffix(".html"), out_dir / f"latest_{market}.html")
+    log.info("Raport: %s.html (kopia: latest_%s.html)", base, market)
     return niches, keywords
 
 
