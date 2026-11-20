@@ -14,7 +14,7 @@ import sys
 import time
 from pathlib import Path
 
-from kdp import llm
+from kdp import llm, notify
 from kdp.analyze import analyze_keyword
 from kdp.db import DB
 from kdp.discover import expand_seed
@@ -126,8 +126,14 @@ def track_watchlist(f, db, market, path: Path):
         p = parse_product(page)
         p["asin"] = asin
         p["title"] = p.get("title") or label
+        hist = db.product_history(m.code, asin)
+        prev = hist[-1] if hist else None
+        before = len(hist)
         db.add_history(m.code, p)
         db.commit()
+        if len(db.product_history(m.code, asin)) > before:   # nowy wpis (maks. raz na dobę)
+            for msg in notify.book_events(label or asin, asin, prev, p):
+                notify.send(msg)
         log.info("[%s] moja książka %s: BSR %s, opinie %s", m.code, label or asin, p.get("bsr"), p.get("reviews"))
 
 
@@ -198,6 +204,7 @@ def main():
 
     tr = sub.add_parser("track", help="zapisz dziś BSR/opinie Twoich książek z watch.txt"); common(tr, seeds=False)
     mine = sub.add_parser("mine", help="historia Twoich książek z watch.txt"); common(mine, seeds=False)
+    sub.add_parser("telegram", help="połącz z botem Telegram (TELEGRAM_TOKEN w .env) i wyślij test")
 
     sc = sub.add_parser("screens", help="najlepsze frazy z ostatniego przesiewu"); common(sc, seeds=False)
     sc.add_argument("--limit", type=int, default=30)
@@ -225,7 +232,11 @@ def main():
     f = Fetcher(db, debug_dir=ROOT / "debug")
     out = Path(args.out)
 
-    for market in args.market:
+    if args.cmd == "telegram":
+        print(notify.setup(ROOT / ".env"))
+        return
+
+    for market in getattr(args, "market", ["us"]):
         get_market(market)
         if args.cmd == "discover":
             n = do_discover(f, db, market, load_seeds(args) or sys.exit("Podaj --seed lub --seeds"), args.deep)

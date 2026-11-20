@@ -151,3 +151,10 @@ def test_watchlist_tracking():
         kdp_agent.track_watchlist(FakeFetcher(), db, "us", w)
         h = db.product_history("us", "B0BBBB0002")
         assert len(h) == 1 and h[0][1] == 48213
+
+def test_book_events():
+    from kdp.notify import book_events
+    assert "pierwsza sprzedaż" in book_events("PLB", "B0X", (0, None, 0, None, None, ""), {"bsr": 812345, "reviews": 0})[0]
+    assert "kolejna" in book_events("PLB", "B0X", (0, 800000, 0, None, None, ""), {"bsr": 90000, "reviews": 0})[0]
+    assert "opinia" in book_events("PLB", "B0X", (0, 90000, 0, None, None, ""), {"bsr": 95000, "reviews": 1})[0]
+    assert book_events("PLB", "B0X", (0, 90000, 1, None, None, ""), {"bsr": 95000, "reviews": 1}) == []

@@ -18,7 +18,7 @@ case "${1:-}" in
     echo "== Ostatni przebieg (logs/run.log)"; tail -5 logs/run.log 2>/dev/null || echo "brak logu"
     echo; echo "== Tunel przez Luckfoxa"
     ip=$(curl -s -m 10 -x http://127.0.0.1:8888 https://api.ipify.org) && echo "działa, IP: $ip" || echo "NIE DZIAŁA – sprawdź Luckfoxa"
-    echo; echo "== Harmonogram"; crontab -l 2>/dev/null | grep run.sh || echo "brak wpisu w cronie"
+    echo; echo "== Harmonogram"; crontab -l 2>/dev/null | grep -E "run.sh|track.sh" || echo "brak wpisu w cronie"
     ;;
   history|h)
     shift

@@ -75,6 +75,14 @@ Na rynkach DE/FR/IT/ES seedy wpisuj w języku rynku (`dankbarkeitstagebuch`, `ca
 Przy każdym przebiegu `run` agent zapisuje ich BSR, opinie i cenę (maks. raz na dobę).
 Podgląd: `kdp moje` (albo `kdp_agent.py mine`), ręczny zapis: `kdp_agent.py track`.
 
+## Powiadomienia Telegram
+
+1. W Telegramie: @BotFather → `/newbot` → token; napisz do swojego bota „start”.
+2. Na VPS w `.env`: `TELEGRAM_TOKEN=…`, potem `kdp_agent.py telegram` (sam dopisze `TELEGRAM_CHAT_ID` i wyśle test).
+3. Cron codziennie: `13 8 * * * /opt/kdp-niche-agent/track.sh` (8:13 UTC).
+
+Powiadomienia: pierwszy BSR (pierwsza sprzedaż), BSR lepszy o ponad połowę (kolejna sprzedaż), nowa opinia.
+
 ## Cron (np. co poniedziałek o 3:17)
 
 ```
