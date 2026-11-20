@@ -6,12 +6,13 @@ To wystarcza, żeby z ~100+ fraz wybrać kilkadziesiąt do pełnej (drogiej) ana
 import json
 import logging
 import math
+import os
 import time
 from statistics import median
 
 from .analyze import search_url
 from .db import DB
-from .http import Fetcher
+from .http import Blocked, Fetcher
 from .markets import Market
 from .parse import parse_serp
 from .score import clamp
@@ -44,10 +45,27 @@ def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
 def screen_keywords(f: Fetcher, db: DB, m: Market, keywords: list[tuple]) -> list[tuple]:
     """keywords: [(kw, seed, hits, pos)]. Zwraca listę posortowaną wg wyniku przesiewu."""
     db.c.executescript(SCHEMA)
-    out = []
+    out, failed = [], 0
+    pause = int(os.getenv("KDP_BLOCK_PAUSE", "1200"))
+    pauses, max_pauses = 0, int(os.getenv("KDP_MAX_PAUSES", "3"))
     for i, (kw, seed, hits, pos) in enumerate(keywords, 1):
-        html = f.get_html(search_url(m, kw), m.lang, ttl_h=24)
+        while True:
+            try:
+                html = f.get_html(search_url(m, kw), m.lang, ttl_h=24)
+                break
+            except Blocked:
+                if pauses >= max_pauses:
+                    log.error("[%s] Przesiew: blokady nie ustępują – kończę na %d/%d frazach.",
+                              m.code, i - 1, len(keywords))
+                    out.sort(key=lambda x: -x[0])
+                    return out
+                pauses += 1
+                log.warning("[%s] Przesiew: blokada Amazona przy '%s' – przerwa %d min (%d/%d).",
+                            m.code, kw, pause // 60, pauses, max_pauses)
+                time.sleep(pause)
+                f.blocked_count = 0
         if not html:
+            failed += 1
             continue
         serp = parse_serp(html)
         if not serp["items"]:
@@ -60,6 +78,7 @@ def screen_keywords(f: Fetcher, db: DB, m: Market, keywords: list[tuple]) -> lis
         if i % 20 == 0:
             log.info("[%s] przesiew %d/%d", m.code, i, len(keywords))
     out.sort(key=lambda x: -x[0])
+    log.info("[%s] Przesiew gotowy: %d fraz ocenionych, %d nieudanych.", m.code, len(out), failed)
     return out
 
 

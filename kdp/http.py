@@ -70,7 +70,7 @@ class Fetcher:
         cached = self.db.cache_get(key, ttl_h)
         if cached is not None:
             return cached
-        self._sleep(0.4)  # autocomplete jest lekki
+        self._sleep(float(os.getenv("KDP_AC_DELAY", "1.2")))  # podpowiedzi: nie zalewaj Amazona
         for attempt in range(4):
             try:
                 r = self.s.get(url, params=params, headers=self._headers(lang), timeout=20)
