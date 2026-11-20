@@ -33,6 +33,8 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
     organic = [i for i in serp["items"] if not i["sponsored"] and i.get("is_book", True)][:top_n]
     if len(organic) < 5:
         log.info("Pomijam '%s' – w wynikach za mało książek (Amazon pokazał inne produkty).", kw)
+        db.c.execute("DELETE FROM niches WHERE market=? AND keyword=?", (m.code, kw))
+        db.commit()
         return None
     products = []
     for item in organic:

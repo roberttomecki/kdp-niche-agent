@@ -76,6 +76,8 @@ def screen_keywords(f: Fetcher, db: DB, m: Market, keywords: list[tuple]) -> lis
         if not serp["items"]:
             continue
         r = screen_score(serp["items"], serp["total_results"], hits)
+        if r.get("not_books"):  # usuń stare, błędne wyniki pełnej analizy dla tej frazy
+            db.c.execute("DELETE FROM niches WHERE market=? AND keyword=?", (m.code, kw))
         db.c.execute("INSERT OR REPLACE INTO screens VALUES (?,?,?,?,?)",
                      (m.code, kw, time.time(), r["score"], json.dumps(r)))
         db.commit()

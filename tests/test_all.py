@@ -119,3 +119,15 @@ def test_non_book_results_skipped():
     from kdp.screen import screen_score
     mats = [{"sponsored": False, "reviews": 0, "bought_month": 1000, "is_book": False}] * 10
     assert screen_score(mats, 11, 5)["score"] == 0.0
+
+def test_stale_non_book_niche_removed():
+    from kdp.screen import screen_keywords
+    html = '<div data-component-type="s-search-result" data-asin="B0X"><h2>Desk mat</h2></div>' * 6
+    class F(FakeFetcher):
+        def get_html(self, url, lang, ttl_h=72):
+            return html
+    with tempfile.TemporaryDirectory() as d:
+        db = DB(Path(d) / "x.sqlite")
+        db.save_niche("us", "coin desk mat", 99, {"verdict": "x"}); db.commit()
+        screen_keywords(F(), db, get_market("us"), [("coin desk mat", "coin", 1, 1)])
+        assert db.latest_niches("us") == []
