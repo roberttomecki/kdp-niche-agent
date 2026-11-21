@@ -62,7 +62,7 @@ Na rynkach DE/FR/IT/ES seedy wpisuj w języku rynku (`dankbarkeitstagebuch`, `ca
 ## Przesiew i rotacja fraz (domyślnie w run.sh)
 
 - `--rotate 10` – z dużej listy `seeds.txt` agent bierze co tydzień inne 10 fraz bazowych
-  (lista ~70 pomysłów w `seeds.example.txt`), więc w kilka tygodni przechodzi setki nisz.
+  (lista ~130 pomysłów w `seeds.example.txt`), więc w kilka tygodni przechodzi setki nisz.
 - `--screen 120` – najpierw szybki przesiew 120 fraz: tylko 1 strona wyników na frazę
   (liczba wyników, opinie, ceny, odznaki „bought in past month”), a pełna analiza z BSR
   tylko dla `--top 30` najlepszych. Obciążenie Amazona podobne jak wcześniej.

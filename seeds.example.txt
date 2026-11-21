@@ -79,3 +79,98 @@ crossword seniors
 activity book seniors
 dot to dot adults
 mazes for kids
+
+# ================= NOWE (21.11.2026) =================
+# Dobór: kupujący z konkretną potrzebą (zawód, obowiązek, wydarzenie),
+# gdzie liczy się układ stron, a nie autor. Bez znaków towarowych w frazach
+# (np. "dice score sheets" zamiast nazwy gry, "vacation rental" zamiast Airbnb).
+
+# --- zawody i usługi: dzienniki wymagane lub bardzo przydatne w pracy ---
+notary journal
+client book
+appointment book
+tip log
+call log
+petty cash log
+work log
+construction daily log
+security log
+pool maintenance log
+landlord log
+lash tech
+hair stylist
+
+# --- księgi gości (wydarzenia, wynajem) ---
+guest book
+vacation rental guest book
+funeral guest book
+baby shower guest book
+retirement guest book
+sign in book
+
+# --- organizery życiowe (seniorzy, rodziny) ---
+end of life planner
+emergency binder
+important documents organizer
+grandma journal
+memory book
+letters to my baby
+
+# --- niemowlę i rodzina ---
+baby log
+newborn log
+homeschool planner
+lesson planner
+chore chart
+
+# --- zdrowie i nawyki (bez obietnic medycznych) ---
+pain journal
+migraine log
+weight loss journal
+period tracker
+habit tracker
+
+# --- wiara (stabilny popyt cały rok) ---
+prayer journal
+sermon notes
+bible study journal
+
+# --- karty wyników i sport ---
+dice score sheets
+score sheets
+baseball scorebook
+softball scorebook
+basketball scorebook
+bowling score
+disc golf
+pickleball
+chess scorebook
+coach notebook
+
+# --- hobby z „logiem” ---
+beekeeping log
+metal detecting log
+ham radio log
+puzzle journal
+baking journal
+cocktail journal
+whiskey journal
+coffee journal
+cigar journal
+dream journal
+tarot journal
+
+# --- dzieci: zeszyty i ćwiczenia ---
+blank comic book
+handwriting practice
+cursive workbook
+tracing book
+primary composition notebook
+sketchbook
+
+# --- łamigłówki (dobre dla 60+) ---
+number search
+logic puzzles
+cryptogram
+brain games seniors
+large print puzzle
