@@ -22,6 +22,7 @@ from kdp.http import Blocked, Fetcher
 from kdp.markets import get_market
 from kdp.screen import latest_screens, screen_keywords
 from kdp.report import write_csv, write_html, write_json, write_keywords_csv
+from kdp.watch import load_watchlist, track_watchlist
 
 log = logging.getLogger("kdp")
 ROOT = Path(__file__).resolve().parent
@@ -96,47 +97,6 @@ def do_analyze(f, db, market, keywords, top_n):
     return True
 
 
-def load_watchlist(path: Path) -> list[tuple[str, str]]:
-    """watch.txt: jedna książka na linię – ASIN, a po nim opcjonalnie nazwa."""
-    if not path.exists():
-        return []
-    out = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        asin, _, label = line.partition(" ")
-        out.append((asin.upper(), label.strip()))
-    return out
-
-
-def track_watchlist(f, db, market, path: Path):
-    """Zapisz dzisiejszy BSR, opinie i cenę Twoich książek (maks. raz na dobę)."""
-    from kdp.parse import parse_product
-    m = get_market(market)
-    for asin, label in load_watchlist(path):
-        try:
-            page = f.get_html(f"{m.base_url}/dp/{asin}", m.lang, ttl_h=20)
-        except Blocked as e:
-            log.error("Śledzenie przerwane: %s", e)
-            return
-        if not page:
-            log.warning("[%s] %s: nie udało się pobrać strony", m.code, asin)
-            continue
-        p = parse_product(page)
-        p["asin"] = asin
-        p["title"] = p.get("title") or label
-        hist = db.product_history(m.code, asin)
-        prev = hist[-1] if hist else None
-        before = len(hist)
-        db.add_history(m.code, p)
-        db.commit()
-        if len(db.product_history(m.code, asin)) > before:   # nowy wpis (maks. raz na dobę)
-            for msg in notify.book_events(label or asin, asin, prev, p):
-                notify.send(msg)
-        log.info("[%s] moja książka %s: BSR %s, opinie %s", m.code, label or asin, p.get("bsr"), p.get("reviews"))
-
-
 def do_report(db, market, out_dir: Path, advice=None):
     out_dir.mkdir(parents=True, exist_ok=True)
     niches = db.latest_niches(market)
@@ -205,6 +165,7 @@ def main():
     tr = sub.add_parser("track", help="zapisz dziś BSR/opinie Twoich książek z watch.txt"); common(tr, seeds=False)
     mine = sub.add_parser("mine", help="historia Twoich książek z watch.txt"); common(mine, seeds=False)
     sub.add_parser("telegram", help="połącz z botem Telegram (TELEGRAM_TOKEN w .env) i wyślij test")
+    sub.add_parser("bot", help="bot Telegram odpowiadający na komendy (/sprawdz, /moje …)")
 
     sc = sub.add_parser("screens", help="najlepsze frazy z ostatniego przesiewu"); common(sc, seeds=False)
     sc.add_argument("--limit", type=int, default=30)
@@ -234,6 +195,10 @@ def main():
 
     if args.cmd == "telegram":
         print(notify.setup(ROOT / ".env"))
+        return
+    if args.cmd == "bot":
+        from kdp.bot import Bot
+        Bot(ROOT, Path(args.db), WATCH, os.getenv("MARKETS", "us").split()[0]).run()
         return
 
     for market in getattr(args, "market", ["us"]):

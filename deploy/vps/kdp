@@ -47,6 +47,11 @@ EOF
   przesiew|p)
     $PY kdp_agent.py screens --limit "${2:-30}"
     ;;
+  bot|b)
+    if [ "${2:-}" = "restart" ]; then systemctl restart kdp-bot && echo "Bot uruchomiony ponownie"; fi
+    systemctl is-active kdp-bot >/dev/null && echo "Bot Telegram: działa" || echo "Bot Telegram: NIE działa"
+    tail -5 logs/bot.log 2>/dev/null
+    ;;
   luckfox|l)
     exec ssh luckfox
     ;;
@@ -64,6 +69,7 @@ Agent KDP – skróty:
   kdp history "fraza"   historia BSR/opinii/sprzedaży książek z topu frazy
   kdp history ASIN      historia jednej książki
   kdp run               uruchom pełny przebieg teraz (w tle)
+  kdp bot [restart]     czy działa bot Telegram (restart – po aktualizacji kodu)
   kdp luckfox           zaloguj się na Luckfoxa (gdziekolwiek stoi)
 EOF
     ;;

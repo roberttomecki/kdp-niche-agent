@@ -158,3 +158,21 @@ def test_book_events():
     assert "kolejna" in book_events("PLB", "B0X", (0, 800000, 0, None, None, ""), {"bsr": 90000, "reviews": 0})[0]
     assert "opinia" in book_events("PLB", "B0X", (0, 90000, 0, None, None, ""), {"bsr": 95000, "reviews": 1})[0]
     assert book_events("PLB", "B0X", (0, 90000, 1, None, None, ""), {"bsr": 95000, "reviews": 1}) == []
+
+def test_bot_commands():
+    from kdp.bot import Bot
+    from kdp.watch import add_to_watchlist
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d); w = root / "watch.txt"; w.write_text("B0BBBB0002 Moja książka")
+        assert "nie wygląda" in add_to_watchlist(w, "abc", "x")
+        assert "Dodane" in add_to_watchlist(w, "b0cccc0003", "Mileage Log Book")
+        assert "już jest" in add_to_watchlist(w, "B0CCCC0003", "")
+        assert w.read_text().splitlines()[-1] == "B0CCCC0003 Mileage Log Book"
+        b = Bot(root, root / "db.sqlite", w)
+        DB(root / "db.sqlite")
+        assert "Komendy" in b.handle("/pomoc")
+        assert "Nie znam" in b.handle("/xyz")
+        assert "brak danych" in b.handle("/moje@MyBot")
+        assert "Brak analizy" in b.handle("/raport")
+        b.cmd_sprawdz = lambda a: "ok"; assert b.handle("/sprawdź") == "ok"   # polskie znaki → /sprawdz
+        assert b.handle("/Dodaj").startswith("Użycie")

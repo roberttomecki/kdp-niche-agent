@@ -169,3 +169,12 @@ kdp/analyze.py    analiza jednej frazy
 kdp/llm.py        warstwa Claude (wnioski + nowe seedy)
 kdp/report.py     HTML/CSV/JSON
 ```
+
+## Bot Telegram – komendy
+
+Po `kdp_agent.py telegram` (token + chat_id w `.env`) zainstaluj bota jako usługę:
+
+    sudo bash /opt/kdp-niche-agent/deploy/vps/install_bot.sh
+
+Komendy w Telegramie: `/sprawdz`, `/moje`, `/raport`, `/przesiew`, `/status`, `/dodaj ASIN nazwa`, `/pomoc`.
+Bot odpowiada tylko na Twój czat (TELEGRAM_CHAT_ID). Stan: `kdp bot`, po aktualizacji kodu: `kdp bot restart`.
