@@ -21,6 +21,9 @@ from reportlab.lib.colors import Color, HexColor
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from PIL import Image
+from scipy import ndimage
 
 HERE = Path(__file__).resolve().parent
 FONTS = HERE / "fonts"
@@ -49,6 +52,31 @@ def use_palette(name):
     g = globals()
     for k, v in PALETTES[name].items():
         g[k] = HexColor(v)
+
+
+DEER_ART = HERE.parent / "art" / "deer.png"
+
+
+def deer_layer(line_col, fill_col, line_alpha):
+    """Rysunek jelenia jako RGBA: kreski w kolorze line_col, wnętrze sylwetki zasłania poziomice (fill_col)."""
+    g = np.asarray(Image.open(DEER_ART).convert("L"), dtype=np.float32)
+    ink = 1.0 - g / 255.0                                   # 0 tło … 1 kreska
+    walls = ndimage.binary_dilation(ink > 0.35, iterations=3)
+    lab, _ = ndimage.label(~walls)
+    border = set(np.unique(np.r_[lab[0], lab[-1], lab[:, 0], lab[:, -1]])) - {0}
+    inside = ~np.isin(lab, list(border))                    # wnętrze sylwetki (z kreskami)
+    inside = ndimage.binary_erosion(inside, iterations=2)
+    h, w = g.shape
+    rgba = np.zeros((h, w, 4), dtype=np.float32)
+    fc = np.array([fill_col.red, fill_col.green, fill_col.blue]) * 255
+    lc = np.array([line_col.red, line_col.green, line_col.blue]) * 255
+    a_line = np.clip(ink * 1.4, 0, 1) * line_alpha
+    a_fill = inside.astype(np.float32)
+    a = a_line + a_fill * (1 - a_line)
+    rgb = (lc * a_line[..., None] + fc * (a_fill * (1 - a_line))[..., None]) / np.maximum(a, 1e-6)[..., None]
+    rgba[..., :3] = rgb
+    rgba[..., 3] = a * 255
+    return Image.fromarray(rgba.clip(0, 255).astype(np.uint8), "RGBA")
 
 
 def alpha(col, a):
@@ -224,12 +252,18 @@ def build(out: Path, pages: int, variant: str = "green") -> Path:
         n += 1
 
     # tropy: łańcuch przez poziomice ku stanowisku
-    # duże tropy – czytelne także na miniaturze w wynikach Amazona
-    stand = np.array([fx + 3.78, 3.05])
-    pts = bezier(np.array([fx + 0.95, 0.80]), np.array([fx + 2.30, 0.95]),
-                 np.array([fx + 2.05, 2.75]), stand)
-    track_line(c, pts, step=0.43, s=0.27, a0=0.45, a1=1.0, stop=0.62, spread=0.11)
+    # jeleń (ilustracja) – delikatny, „wycięty” z mapy; tropy prowadzą do jego tylnych racic
+    dw = 2.75
+    dh = dw * 1331 / 1295
+    dx, dy = fx + 2.55, 0.92
+    img = deer_layer(BONE, GROUND, 0.62)
+    c.drawImage(ImageReader(img), dx * IN, dy * IN, dw * IN, dh * IN, mask="auto")
+    pts = bezier(np.array([fx + 0.72, 0.70]), np.array([fx + 1.40, 0.80]),
+                 np.array([fx + 2.00, 1.30]), np.array([fx + 2.70, 1.18]))
+    track_line(c, pts, step=0.40, s=0.23, a0=0.40, a1=0.95, stop=0.15, spread=0.10)
 
+    # stanowisko myśliwego – obserwuje z boku
+    stand = np.array([fx + 0.98, 3.55])
     # stanowisko – jedyny pomarańczowy element
     sx, sy = stand * IN
     c.setStrokeColor(BLAZE)
