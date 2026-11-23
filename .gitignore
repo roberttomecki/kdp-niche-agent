@@ -7,3 +7,4 @@ venv/
 __pycache__/
 watch.txt
 nisze.txt
+nisze_auto.json

@@ -4,6 +4,6 @@ cd "$(dirname "$0")" && mkdir -p logs
 git pull --ff-only -q >> logs/track.log 2>&1 || true
 set -a; [ -f .env ] && . ./.env; set +a
 ./venv/bin/python kdp_agent.py track --market "${MARKETS:-us}" >> logs/track.log 2>&1
-# obserwowane nisze z nisze.txt (kilkadziesiąt zapytań, raz na dobę)
-[ -f nisze.txt ] && ./venv/bin/python kdp_agent.py watch-niches --market "${MARKETS:-us}" >> logs/track.log 2>&1
+# obserwowane nisze: ręczne (nisze.txt) i automatyczne (nisze_auto.json)
+./venv/bin/python kdp_agent.py watch-niches --market "${MARKETS:-us}" >> logs/track.log 2>&1
 exit 0

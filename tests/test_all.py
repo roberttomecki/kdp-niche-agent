@@ -203,3 +203,32 @@ def test_niche_watch():
     rows = [(1, 500000), (2, 120000), (3, 180000), (4, 260000), (5, 90000)]
     assert sale_signals(rows) == (2, 4)
     assert sale_signals([(1, None), (2, 300000)]) == (1, 1)
+
+def test_niche_auto_rotation():
+    import time as _t
+    from kdp import nichewatch as nw
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d); db = DB(root / "db.sqlite")
+        watch = root / "watch.txt"; watch.write_text("B0HSCT2JS5 Password Log Book\nB0DEER0001 Deer Hunting Log Book\n")
+        niches = root / "nisze.txt"
+        def niche(kw, score, verdict="do sprawdzenia", titles=None):
+            tops = [{"asin": f"A{kw[:3]}{i}", "title": t, "reviews": 3} for i, t in enumerate(titles or [kw.title()] * 6)]
+            db.save_niche("us", kw, score, {"verdict": verdict, "top_products": tops})
+        niche("golf log book", 70, "dobra nisza")
+        niche("golf log book for men", 69)                       # wariant tej samej frazy
+        niche("hunting journal for women", 68)                   # tematyka Twojej książki
+        niche("password book small", 66)                          # tematyka Twojej książki
+        niche("stamp album keychain", 65, titles=["Leather Wallet Organizer"] * 6)  # w wynikach coś innego
+        niche("quilting planner", 64)
+        niche("workout log", 40)                                  # za niska ocena
+        niche("coin book", 60, "nasycona")
+        db.commit()
+        assert nw.pick_candidates(db, "us", niches, watch) == ["golf log book", "quilting planner"]
+        nw.weekly_rotation(db, "us", niches, watch)
+        assert set(nw.load_auto(niches)) == {"golf log book", "quilting planner"}
+        assert "Dodane" in nw.add_niche(niches, "quilting planner")          # auto → na stałe
+        assert "quilting planner" not in nw.load_auto(niches) and nw.load_manual(niches) == ["quilting planner"]
+        auto = nw.load_auto(niches); auto["golf log book"] -= 15 * 86400; nw.save_auto(niches, auto)
+        txt = nw.weekly_rotation(db, "us", niches, watch)
+        assert "Koniec" in txt and "golf log book" not in nw.load_auto(niches)
+        assert "(auto" not in nw.niche_trends(db, "us", niches)

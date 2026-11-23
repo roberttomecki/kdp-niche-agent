@@ -23,7 +23,7 @@ from kdp.markets import get_market
 from kdp.screen import latest_screens, screen_keywords
 from kdp.report import write_csv, write_html, write_json, write_keywords_csv
 from kdp.watch import load_watchlist, track_watchlist
-from kdp.nichewatch import niche_trends, watch_niches
+from kdp.nichewatch import niche_trends, watch_niches, weekly_rotation
 
 log = logging.getLogger("kdp")
 ROOT = Path(__file__).resolve().parent
@@ -169,6 +169,8 @@ def main():
     wn = sub.add_parser("watch-niches", help="codzienny pomiar obserwowanych nisz z nisze.txt"); common(wn, seeds=False)
     nt = sub.add_parser("niche-trends", help="sygnały sprzedaży w obserwowanych niszach"); common(nt, seeds=False)
     nt.add_argument("--days", type=int, default=14)
+    ro = sub.add_parser("rotate-niches", help="wybierz teraz nisze do obserwacji (normalnie po run)")
+    common(ro, seeds=False)
     sub.add_parser("telegram", help="połącz z botem Telegram (TELEGRAM_TOKEN w .env) i wyślij test")
     sub.add_parser("bot", help="bot Telegram odpowiadający na komendy (/sprawdz, /moje …)")
 
@@ -219,6 +221,8 @@ def main():
         elif args.cmd == "watch-niches":
             n = watch_niches(f, db, market, NICHES)
             log.info("[%s] obserwowane nisze: zmierzono %d", market, n)
+        elif args.cmd == "rotate-niches":
+            print(weekly_rotation(db, market, NICHES, WATCH) or "Brak zmian.")
         elif args.cmd == "niche-trends":
             print(niche_trends(db, market, NICHES, args.days))
         elif args.cmd == "mine":
@@ -271,6 +275,7 @@ def main():
                         break
             track_watchlist(f, db, market, WATCH)
             do_report(db, market, out, advice)
+            weekly_rotation(db, market, NICHES, WATCH)   # automatyczny wybór nisz do obserwacji
 
 
 if __name__ == "__main__":
