@@ -12,15 +12,16 @@ Termin: sezon na jelenie trwa do stycznia, prezenty świąteczne. Celem jest spr
 pip install reportlab numpy matplotlib
 python make_interior.py --author "Robert Tomecki"   # output/deer-hunting-log-book_6x9_interior.pdf (110 stron)
 python cover/make_cover.py --pages 110              # output/deer-hunting-log-book_6x9_cover.pdf (12,498 × 9,25")
+python cover/make_cover.py --pages 110 --variant orange   # wariant pomarańczowy: …_cover_orange.pdf
 ```
 
 **Wnętrze (110 stron):** strona tytułowa, prawa autorskie i uwaga o przepisach łowieckich, instrukcja
 z kluczem faz księżyca, dane myśliwego i licencji z datami sezonów (łuk, kusza, muzzleloader, broń palna,
 młodzież), lista sprzętu z polami wyboru (24 pozycje plus puste), 2 strony stanowisk (6 stanowisk:
 typ, GPS, wiatr, dojście), 4 strony szkiców terenu (siatka kropek, strzałka północy),
-**80 stron polowań** (data, stanowisko, godziny, broń, róża wiatrów do zakreślenia, temperatura,
-prędkość wiatru, niebo, ciśnienie, faza księżyca, tabela zaobserwowanych jeleni: byki, łanie, młode,
-oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, tropienie,
+**80 stron polowań** (data, stanowisko, z kim, godziny, broń, róża wiatrów do zakreślenia, temperatura,
+prędkość wiatru, niebo z ikonami pogody, ciśnienie, faza księżyca, tabela zaobserwowanych jeleni: byki, łanie, młode,
+oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, kontur jelenia do zaznaczenia miejsca trafienia, tropienie,
 numer znacznika, poroże L/P, waga, wiek, miejsce na zdjęcie, opis), 4 strony fotopułapek,
 2 podsumowania sezonu, notatki.
 

@@ -250,6 +250,102 @@ def moon(c, cx, cy, r, phase):
     c.circle(cx, cy, r, stroke=1, fill=0)
 
 
+def sky_icon(c, kind, cx, cy, s=5.0):
+    """Proste ikonki pogody (sun, cloud, rain, snow, fog) wyśrodkowane w (cx, cy)."""
+    c.saveState()
+    c.setStrokeColor(INK); c.setFillColor(INK); c.setLineWidth(0.8); c.setLineCap(1)
+
+    def cloud(x, y, k=1.0):
+        c.setFillColor(white)
+        for dx, dy, r in [(-0.45, -0.1, 0.42), (0.05, 0.18, 0.55), (0.5, -0.1, 0.4)]:
+            c.circle(x + dx * s * k, y + dy * s * k, r * s * k, stroke=1, fill=1)
+        c.rect(x - 0.55 * s * k, y - 0.52 * s * k, 1.1 * s * k, 0.42 * s * k, stroke=0, fill=1)
+        c.line(x - 0.6 * s * k, y - 0.52 * s * k, x + 0.62 * s * k, y - 0.52 * s * k)
+    if kind == "sun":
+        c.circle(cx, cy, 0.45 * s, stroke=1, fill=0)
+        for i in range(8):
+            a = math.radians(i * 45)
+            c.line(cx + math.cos(a) * 0.65 * s, cy + math.sin(a) * 0.65 * s,
+                   cx + math.cos(a) * 0.95 * s, cy + math.sin(a) * 0.95 * s)
+    elif kind == "cloud":
+        cloud(cx, cy)
+    elif kind == "rain":
+        cloud(cx, cy + 0.25 * s, 0.85)
+        for dx in (-0.4, 0.0, 0.4):
+            c.line(cx + dx * s, cy - 0.45 * s, cx + (dx - 0.12) * s, cy - 0.85 * s)
+    elif kind == "snow":
+        for i in range(3):
+            a = math.radians(90 + i * 60)
+            c.line(cx - math.cos(a) * 0.85 * s, cy - math.sin(a) * 0.85 * s,
+                   cx + math.cos(a) * 0.85 * s, cy + math.sin(a) * 0.85 * s)
+    elif kind == "fog":
+        for k, dy in enumerate((0.45, 0.0, -0.45)):
+            off = 0.15 * s if k % 2 else 0
+            c.line(cx - 0.85 * s + off, cy + dy * s, cx + 0.85 * s - off, cy + dy * s)
+    c.restoreState()
+
+
+def sky_options(c, x, y, size=7.2):
+    c.setFillColor(INK); c.setFont("Sans-Bold", 8)
+    c.drawString(x, y, "Sky:")
+    x += pdfmetrics.stringWidth("Sky:", "Sans-Bold", 8) + 6
+    for kind, lab in [("sun", "Clear"), ("cloud", "Cloudy"), ("rain", "Rain"), ("snow", "Snow"), ("fog", "Fog")]:
+        c.setStrokeColor(INK); c.setLineWidth(0.7)
+        c.circle(x + 3.2, y + 3, 3.2, stroke=1, fill=0)
+        sky_icon(c, kind, x + 14.5, y + 3.2, 4.2)
+        c.setFillColor(INK); c.setFont("Sans", size)
+        c.drawString(x + 21.5, y, lab)
+        x += 21.5 + pdfmetrics.stringWidth(lab, "Sans", size) + 4
+
+
+# Sylwetka byka z boku (x w prawo, y w górę; szer. ~1.0, wys. ~1.36). Trzeci element: ostry narożnik.
+DEER_BODY = [
+ (0.00,0.88,0),(0.06,0.96,0),(0.12,1.00,1),(0.15,1.02,0),(0.20,1.10,1),(0.20,1.01,0),(0.24,0.92,0),(0.30,0.80,0),
+ (0.38,0.74,0),(0.60,0.72,0),(0.85,0.72,0),(0.95,0.70,0),(0.98,0.74,1),(1.01,0.70,1),(0.97,0.66,0),(0.97,0.58,0),
+ (0.95,0.48,0),(0.975,0.30,1),(0.955,0.02,1),(0.92,0.0,1),(0.925,0.26,0),(0.89,0.38,0),(0.86,0.44,1),
+ (0.845,0.36,0),(0.875,0.26,1),(0.86,0.02,1),(0.825,0.0,1),(0.835,0.24,0),(0.815,0.38,0),
+ (0.70,0.44,0),(0.50,0.44,0),(0.42,0.42,0),(0.415,0.30,0),(0.415,0.02,1),(0.375,0.0,1),(0.378,0.28,0),(0.37,0.36,1),
+ (0.358,0.26,0),(0.355,0.02,1),(0.315,0.0,1),(0.318,0.28,0),(0.31,0.42,0),(0.29,0.52,0),(0.24,0.66,0),(0.17,0.80,0),
+ (0.10,0.83,0),(0.04,0.84,0)]
+DEER_ANTLERS = [[(0.13,1.00),(0.17,1.12),(0.15,1.22),(0.08,1.27),(0.02,1.25)],[(0.15,1.06),(0.11,1.12)],[(0.165,1.17),(0.20,1.26)],[(0.13,1.235),(0.145,1.34)],[(0.08,1.265),(0.075,1.36)]]
+
+
+def _smooth_closed(c, pts, x, y, k):
+    """Zamknięta krzywa Catmulla-Roma przez punkty (narożniki oznaczone 1 zostają ostre)."""
+    P = [(x + a * k, y + b * k, sh) for a, b, sh in pts]
+    p = c.beginPath()
+    p.moveTo(P[0][0], P[0][1])
+    n = len(P)
+    for i in range(n):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[(i + 1) % n], P[(i + 2) % n]
+        t = 0.0 if (p1[2] or p2[2]) else 1 / 6
+        p.curveTo(p1[0] + (p2[0] - p0[0]) * t, p1[1] + (p2[1] - p0[1]) * t,
+                  p2[0] - (p3[0] - p1[0]) * t, p2[1] - (p3[1] - p1[1]) * t, p2[0], p2[1])
+    p.close()
+    return p
+
+
+def deer_outline(c, x, y, h):
+    """Kontur jelenia (lewy dolny róg x, y; wysokość h) do zaznaczenia miejsca trafienia."""
+    k = h / 1.36
+    c.saveState()
+    c.setLineJoin(1); c.setLineCap(1)
+    c.setFillColor(Color(0.93, 0.93, 0.91)); c.setStrokeColor(INK); c.setLineWidth(0.9)
+    c.drawPath(_smooth_closed(c, DEER_BODY, x, y, k), stroke=1, fill=1)
+    c.setLineWidth(1.3)
+    for line in DEER_ANTLERS:
+        q = c.beginPath()
+        q.moveTo(x + line[0][0] * k, y + line[0][1] * k)
+        for px, py in line[1:]:
+            q.lineTo(x + px * k, y + py * k)
+        c.drawPath(q, stroke=1, fill=0)
+    # strefa serca i płuc – przerywany owal tuż za przednią nogą
+    c.setDash(2, 2); c.setLineWidth(0.6); c.setStrokeColor(SOFT)
+    c.ellipse(x + 0.37 * k, y + 0.47 * k, x + 0.53 * k, y + 0.63 * k, stroke=1, fill=0)
+    c.restoreState()
+    return k * 1.02   # szerokość rysunku
+
+
 def section(c, x0, x1, y, text, size=9.5):
     c.setFillColor(INK)
     c.setFont("Sans-Bold", size)
@@ -303,6 +399,8 @@ def hunt_page(b):
     y -= 22
     field(c, x0, y, "Location / stand:", x1)
     y -= 20
+    field(c, x0, y, "Hunting with:", x1)
+    y -= 20
     field(c, x0, y, "Time in:", x0 + 118)
     field(c, x0 + 128, y, "Time out:", x0 + 250)
     field(c, x0 + 260, y, "Hours:", x1)
@@ -325,7 +423,7 @@ def hunt_page(b):
     field(c, wx + 100, wy, "Wind speed:", x1 - 30, size=8.5)
     c.setFont("Sans", 8.5); c.drawString(x1 - 27, wy, "mph")
     wy -= 19
-    options(c, wx, wy, "Sky:", ["Clear", "Cloudy", "Rain", "Snow", "Fog"], size=8, gap=5)
+    sky_options(c, wx, wy)
     wy -= 19
     field(c, wx, wy, "Barometer:", wx + 110, size=8.5)
     options(c, wx + 116, wy, "", ["Rising", "Falling"], size=8, gap=5)
@@ -362,7 +460,7 @@ def harvest_page(b, n):
     c.drawString(x0, y, f"HARVEST RECORD {n}")
     y -= 24
     rows = [("Date:", "Time:"), ("Location / stand:", None), ("Weapon & load / broadhead:", None),
-            ("Shot distance (yds):", "Shot placement:"), ("Tracked (yds):", "Recovered at:"),
+            ("Shot distance (yds):", "Shot angle:"), ("Tracked (yds):", "Recovered at:"),
             ("Tag / permit #:", "Check-in #:")]
     for a, bb in rows:
         if bb:
@@ -378,13 +476,22 @@ def harvest_page(b, n):
     labels = ["Points", "Main beam", "Inside spread", "Est. weight (lbs)", "Est. age"]
     bottom = b.table(cols, 5, y - 7, y - 7 - 0.3 * INCH - 5 * 0.29 * INCH, first_col_values=labels)
     y = bottom - 14
-    # zdjęcie
+    # miejsce trafienia (kontur jelenia) i zdjęcie obok siebie
     ph = 2.0 * INCH
-    c.setStrokeColor(GRID); c.setLineWidth(0.8); c.setDash(3, 3)
-    c.rect(x0, y - ph, x1 - x0, ph, stroke=1, fill=0)
+    half = (x1 - x0 - 10) / 2
+    c.setStrokeColor(INK); c.setLineWidth(0.8)
+    c.roundRect(x0, y - ph, half, ph, 5, stroke=1, fill=0)
+    c.setFillColor(INK); c.setFont("Sans-Bold", 8)
+    c.drawString(x0 + 7, y - 13, "SHOT PLACEMENT – mark the hit")
+    dh = ph - 30
+    dw = dh / 1.36 * 1.02
+    deer_outline(c, x0 + (half - dw) / 2, y - ph + 8, dh)
+    px = x0 + half + 10
+    c.setStrokeColor(GRID); c.setDash(3, 3)
+    c.rect(px, y - ph, half, ph, stroke=1, fill=0)
     c.setDash()
     c.setFillColor(SOFT); c.setFont("Sans", 9)
-    c.drawCentredString((x0 + x1) / 2, y - ph / 2 - 3, "Tape a photo here")
+    c.drawCentredString(px + half / 2, y - ph / 2 - 3, "Tape a photo here")
     y -= ph + 16
     section(c, x0, x1, y, "The story")
     b.lines(y - 2, y0, step=0.3 * INCH)
