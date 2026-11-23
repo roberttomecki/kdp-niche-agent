@@ -16,8 +16,8 @@ def search_url(m: Market, kw: str) -> str:
 
 
 def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
-                    top_n: int = 10, product_ttl_h: float = 72) -> dict | None:
-    html = f.get_html(search_url(m, kw), m.lang, ttl_h=24)
+                    top_n: int = 10, product_ttl_h: float = 72, serp_ttl_h: float = 24) -> dict | None:
+    html = f.get_html(search_url(m, kw), m.lang, ttl_h=serp_ttl_h)
     if not html:
         log.warning("Brak wyników wyszukiwania dla '%s'", kw)
         return None
@@ -39,13 +39,15 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
     products = []
     for item in organic:
         p = db.get_product(m.code, item["asin"], product_ttl_h)
+        fresh = p is None
         if p is None:
             page = f.get_html(f"{m.base_url}/dp/{item['asin']}", m.lang, ttl_h=product_ttl_h)
             p = parse_product(page) if page else {}
             db.save_product(m.code, item["asin"], p)
         merged = {**item, **{k: v for k, v in p.items() if v not in (None, "")}}
         merged["est_sales_day"] = round(sales_per_day(merged.get("bsr"), m.sales_factor), 2)
-        db.add_history(m.code, merged)
+        if fresh:   # historia tylko ze świeżo pobranej strony – dane z cache zdublowałyby stary BSR z nową datą
+            db.add_history(m.code, merged)
         products.append(merged)
 
     db.save_serp(m.code, kw, serp["total_results"], serp["items"])

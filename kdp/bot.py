@@ -15,6 +15,7 @@ from kdp.db import DB
 from kdp.http import Fetcher
 from kdp.screen import latest_screens
 from kdp.watch import add_to_watchlist, load_watchlist, track_watchlist
+from kdp.nichewatch import add_niche, niche_trends, remove_niche
 
 log = logging.getLogger("kdp")
 
@@ -25,6 +26,9 @@ COMMANDS = [
     ("przesiew", "najlepsze frazy z ostatniego przesiewu"),
     ("status", "czy działa tunel i kiedy był ostatni przebieg"),
     ("dodaj", "dodaj książkę: /dodaj ASIN nazwa"),
+    ("nisze", "sygnały sprzedaży w obserwowanych niszach"),
+    ("obserwuj", "obserwuj niszę codziennie: /obserwuj fraza"),
+    ("przestan", "przestań obserwować: /przestan fraza"),
     ("pomoc", "lista komend"),
 ]
 HELP = ("Komendy:\n" + "\n".join(f"/{c} – {d}" for c, d in COMMANDS)
@@ -51,8 +55,9 @@ def _tail(path: Path, n: int = 1) -> str:
 
 
 class Bot:
-    def __init__(self, root: Path, db_path: Path, watch: Path, market: str = "us"):
+    def __init__(self, root: Path, db_path: Path, watch: Path, market: str = "us", niches: Path | None = None):
         self.root, self.db_path, self.watch, self.market = root, db_path, watch, market
+        self.niches = niches or root / "nisze.txt"
 
     def _db(self):
         return DB(self.db_path)
@@ -137,6 +142,16 @@ class Bot:
         if not asin:
             return "Użycie: /dodaj ASIN nazwa\nnp. /dodaj B0XXXXXXXX Mileage Log Book"
         return add_to_watchlist(self.watch, asin, label.strip())
+
+    def cmd_nisze(self, arg):
+        days = int(arg) if arg.isdigit() else 14
+        return niche_trends(self._db(), self.market, self.niches, days)
+
+    def cmd_obserwuj(self, arg):
+        return add_niche(self.niches, arg)
+
+    def cmd_przestan(self, arg):
+        return remove_niche(self.niches, arg)
 
     # --- pętla ---------------------------------------------------------------
     def handle(self, text: str) -> str:

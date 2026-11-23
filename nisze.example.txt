@@ -1,0 +1,6 @@
+# Nisze obserwowane codziennie (jedna fraza na linię). Skopiuj do nisze.txt.
+# W Telegramie: /obserwuj fraza, /przestan fraza, /nisze
+golf log book
+coin collecting book for kids
+quilting project planner
+hunting journal

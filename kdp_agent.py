@@ -23,10 +23,12 @@ from kdp.markets import get_market
 from kdp.screen import latest_screens, screen_keywords
 from kdp.report import write_csv, write_html, write_json, write_keywords_csv
 from kdp.watch import load_watchlist, track_watchlist
+from kdp.nichewatch import niche_trends, watch_niches
 
 log = logging.getLogger("kdp")
 ROOT = Path(__file__).resolve().parent
 WATCH = Path(os.getenv("KDP_WATCH", str(ROOT / "watch.txt")))
+NICHES = Path(os.getenv("KDP_NICHES", str(ROOT / "nisze.txt")))
 
 
 def load_seeds(args) -> list[str]:
@@ -164,6 +166,9 @@ def main():
 
     tr = sub.add_parser("track", help="zapisz dziś BSR/opinie Twoich książek z watch.txt"); common(tr, seeds=False)
     mine = sub.add_parser("mine", help="historia Twoich książek z watch.txt"); common(mine, seeds=False)
+    wn = sub.add_parser("watch-niches", help="codzienny pomiar obserwowanych nisz z nisze.txt"); common(wn, seeds=False)
+    nt = sub.add_parser("niche-trends", help="sygnały sprzedaży w obserwowanych niszach"); common(nt, seeds=False)
+    nt.add_argument("--days", type=int, default=14)
     sub.add_parser("telegram", help="połącz z botem Telegram (TELEGRAM_TOKEN w .env) i wyślij test")
     sub.add_parser("bot", help="bot Telegram odpowiadający na komendy (/sprawdz, /moje …)")
 
@@ -198,7 +203,7 @@ def main():
         return
     if args.cmd == "bot":
         from kdp.bot import Bot
-        Bot(ROOT, Path(args.db), WATCH, os.getenv("MARKETS", "us").split()[0]).run()
+        Bot(ROOT, Path(args.db), WATCH, os.getenv("MARKETS", "us").split()[0], NICHES).run()
         return
 
     for market in getattr(args, "market", ["us"]):
@@ -211,6 +216,11 @@ def main():
             do_analyze(f, db, market, pick_keywords(db, market, args.top, seeds), args.per_keyword)
         elif args.cmd == "track":
             track_watchlist(f, db, market, WATCH)
+        elif args.cmd == "watch-niches":
+            n = watch_niches(f, db, market, NICHES)
+            log.info("[%s] obserwowane nisze: zmierzono %d", market, n)
+        elif args.cmd == "niche-trends":
+            print(niche_trends(db, market, NICHES, args.days))
         elif args.cmd == "mine":
             books = load_watchlist(WATCH)
             if not books:

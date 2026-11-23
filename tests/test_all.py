@@ -189,3 +189,17 @@ def test_badge_relevance():
     kpop = {"sponsored": False, "is_book": True, "title": "Kpop Demon Hunters Tab Journal", "reviews": 3, "bought_month": 2000}
     assert screen_score(books + [kpop], 2000, 5, kw)["badges_sum"] == 0
     assert screen_score(books + [kpop], 2000, 5)["badges_sum"] == 2000
+
+def test_niche_watch():
+    from kdp.nichewatch import add_niche, load_niche_watch, remove_niche, sale_signals
+    with tempfile.TemporaryDirectory() as d:
+        w = Path(d) / "nisze.txt"
+        assert "Dodane" in add_niche(w, "Golf  Log Book")
+        assert "już" in add_niche(w, "golf log book")
+        add_niche(w, "hunting journal")
+        assert load_niche_watch(w) == ["golf log book", "hunting journal"]
+        assert "Usunięte" in remove_niche(w, "golf log book")
+        assert load_niche_watch(w) == ["hunting journal"]
+    rows = [(1, 500000), (2, 120000), (3, 180000), (4, 260000), (5, 90000)]
+    assert sale_signals(rows) == (2, 4)
+    assert sale_signals([(1, None), (2, 300000)]) == (1, 1)
