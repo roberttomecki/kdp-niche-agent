@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Okładka KDP (tył + grzbiet + przód) dla „Deer Hunting Log Book”, 6 × 9".
 
-Użycie:  python cover/make_cover.py --pages 110
+Użycie:  python cover/make_cover.py --pages 110 [--variant green|orange]
 Wymiary: szerokość = 0.125 + 6 + grzbiet + 6 + 0.125, wysokość = 9 + 0.25;
 grzbiet = strony × 0.002252" (biały papier). Porównaj z KDP Cover Calculator.
 
@@ -31,10 +31,24 @@ for name, file in [("Park", "NationalPark-Bold.ttf"), ("ParkReg", "NationalPark-
 BLEED, PAPER, TW, TH = 0.125, 0.002252, 6.0, 9.0
 IN = 72.0
 GROUND = HexColor("#1C2820")
-CONTOUR = HexColor("#3E5040")
-INDEX = HexColor("#506550")
+CONTOUR = HexColor("#435745")
+INDEX = HexColor("#5A705A")
 BONE = HexColor("#ECE4D2")
 BLAZE = HexColor("#F2641C")
+
+
+PALETTES = {
+    # wariant A: ciemna zieleń lasu, kość, pomarańcz sygnałowy
+    "green": dict(GROUND="#1C2820", CONTOUR="#435745", INDEX="#5A705A", BONE="#ECE4D2", BLAZE="#F2641C"),
+    # wariant B: pomarańcz sygnałowy (blaze orange) jako tło – wyróżnia się wśród brązów i zieleni
+    "orange": dict(GROUND="#D8561F", CONTOUR="#E57A45", INDEX="#EE9364", BONE="#1C2820", BLAZE="#F6EBD6"),
+}
+
+
+def use_palette(name):
+    g = globals()
+    for k, v in PALETTES[name].items():
+        g[k] = HexColor(v)
 
 
 def alpha(col, a):
@@ -98,7 +112,7 @@ def hoof(c, x, y, ang, s, col):
     c.restoreState()
 
 
-def track_line(c, pts, step, s, a0, a1, stop):
+def track_line(c, pts, step, s, a0, a1, stop, spread=0.055):
     d = np.r_[0, np.cumsum(np.hypot(*np.diff(pts, axis=0).T))]
     total = d[-1] - stop
     k, pos = 0, 0.15
@@ -108,7 +122,7 @@ def track_line(c, pts, step, s, a0, a1, stop):
         dx, dy = pts[min(i + 3, len(pts) - 1)] - pts[max(i - 3, 0)]
         ang = math.atan2(dy, dx)
         side = 1 if k % 2 else -1
-        nx, ny = -math.sin(ang) * side * 0.055, math.cos(ang) * side * 0.055
+        nx, ny = -math.sin(ang) * side * spread, math.cos(ang) * side * spread
         a = a0 + (a1 - a0) * (pos / total) ** 1.4
         hoof(c, x + nx, y + ny, ang, s, alpha(BONE, a))
         pos += step
@@ -120,11 +134,13 @@ def fit(text, font, width_in):
     return width_in * IN / pdfmetrics.stringWidth(text, font, 1)
 
 
-def build(out: Path, pages: int) -> Path:
+def build(out: Path, pages: int, variant: str = "green") -> Path:
+    use_palette(variant)
     spine = pages * PAPER
     W, H = BLEED + TW + spine + TW + BLEED, TH + 2 * BLEED
     fx = BLEED + TW + spine                     # lewa krawędź przodu (linia grzbietu)
-    path = out / "deer-hunting-log-book_6x9_cover.pdf"
+    path = out / ("deer-hunting-log-book_6x9_cover.pdf" if variant == "green"
+                  else f"deer-hunting-log-book_6x9_cover_{variant}.pdf")
     c = canvas.Canvas(str(path), pagesize=(W * IN, H * IN), initialFontName="Mono")
     c.setTitle("Deer Hunting Log Book – cover")
     c.setAuthor("Robert Tomecki")
@@ -208,48 +224,52 @@ def build(out: Path, pages: int) -> Path:
         n += 1
 
     # tropy: łańcuch przez poziomice ku stanowisku
-    stand = np.array([fx + 3.62, 2.86])
-    pts = bezier(np.array([fx + 0.78, 0.92]), np.array([fx + 1.65, 1.15]),
-                 np.array([fx + 1.70, 2.70]), stand)
-    track_line(c, pts, step=0.22, s=0.115, a0=0.18, a1=0.95, stop=0.44)
+    # duże tropy – czytelne także na miniaturze w wynikach Amazona
+    stand = np.array([fx + 3.78, 3.05])
+    pts = bezier(np.array([fx + 0.95, 0.80]), np.array([fx + 2.30, 0.95]),
+                 np.array([fx + 2.05, 2.75]), stand)
+    track_line(c, pts, step=0.43, s=0.27, a0=0.45, a1=1.0, stop=0.62, spread=0.11)
 
     # stanowisko – jedyny pomarańczowy element
     sx, sy = stand * IN
     c.setStrokeColor(BLAZE)
     c.setLineWidth(0.6)
-    c.circle(sx, sy, 0.17 * IN, stroke=1, fill=0)
+    c.setLineWidth(1.6)
+    c.circle(sx, sy, 0.27 * IN, stroke=1, fill=0)
     c.setFillColor(BLAZE)
-    r = 0.075 * IN
+    r = 0.13 * IN
     p = c.beginPath()
     p.moveTo(sx, sy + r)
     p.lineTo(sx - r * 0.95, sy - r * 0.62)
     p.lineTo(sx + r * 0.95, sy - r * 0.62)
     p.close()
     c.drawPath(p, stroke=0, fill=1)
-    c.setFont("Mono", 6.4)
+    c.setFont("Mono", 8)
     c.setFillColor(BONE)
-    c.drawString(sx + 0.27 * IN, sy + 2, "STAND 3")
+    c.drawString(sx + 0.40 * IN, sy + 3, "STAND 3")
     c.setFillColor(alpha(BONE, 0.7))
-    c.drawString(sx + 0.27 * IN, sy - 7.5, "06:48  WIND NW 4")
+    c.drawString(sx + 0.40 * IN, sy - 9, "06:48  WIND NW 4")
 
     # tytuł
     tx = L + 0.32
     tw = (R - L) - 0.64
-    size = fit("DEER HUNTING", "Park", tw)
+    # „DEER” jako najważniejsze słowo – największe; niżej „HUNTING LOG BOOK”
+    top = T - 0.38
+    size = fit("DEER", "Park", tw)
+    size = min(size, 2.05 * IN / 0.72)              # wysokość wersalików ≤ ~2"
     c.setFillColor(BONE)
     c.setFont("Park", size)
-    top = T - 0.42
-    c.drawString(tx * IN, (top * IN) - size * 0.74, "DEER HUNTING")
-    size2 = fit("LOG BOOK", "Park", tw)
-    size2 = min(size2, size * 1.32)
+    y1 = (top * IN) - size * 0.72
+    c.drawString(tx * IN - size * 0.03, y1, "DEER")
+    size2 = fit("HUNTING LOG BOOK", "Park", tw)
     c.setFont("Park", size2)
-    y2 = (top * IN) - size * 0.74 - size2 * 0.86
-    c.drawString(tx * IN, y2, "LOG BOOK")
+    y2 = y1 - size2 * 1.05
+    c.drawString(tx * IN, y2, "HUNTING LOG BOOK")
     # cienka linia i podtytuł
     ly = y2 - 0.24 * IN
     c.setStrokeColor(BLAZE)
-    c.setLineWidth(1.4)
-    c.line(tx * IN, ly, (tx + 0.55) * IN, ly)
+    c.setLineWidth(2.6)
+    c.line(tx * IN, ly, (tx + 0.8) * IN, ly)
     c.setFillColor(BONE)
     c.setFont("Jura", 13.5)
     c.drawString(tx * IN, ly - 0.3 * IN, "Record every hunt: weather, wind,")
@@ -317,10 +337,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--pages", type=int, default=110)
     ap.add_argument("--out", default=str(HERE.parent / "output"))
+    ap.add_argument("--variant", choices=sorted(PALETTES), default="green")
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    p = build(out, a.pages)
+    p = build(out, a.pages, a.variant)
     spine = a.pages * PAPER
     print(f"{p}  ({2 * BLEED + 2 * TW + spine:.3f} × {TH + 2 * BLEED:.2f} in, grzbiet {spine:.3f} in)")
 
