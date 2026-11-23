@@ -21,7 +21,7 @@ młodzież), lista sprzętu z polami wyboru (24 pozycje plus puste), 2 strony st
 typ, GPS, wiatr, dojście), 4 strony szkiców terenu (siatka kropek, strzałka północy),
 **80 stron polowań** (data, stanowisko, z kim, godziny, broń, róża wiatrów do zakreślenia, temperatura,
 prędkość wiatru, niebo z ikonami pogody, ciśnienie, faza księżyca, tabela zaobserwowanych jeleni: byki, łanie, młode,
-oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, kontur jelenia do zaznaczenia miejsca trafienia, tropienie,
+oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, lista miejsc trafienia do zaznaczenia, tropienie,
 numer znacznika, poroże L/P, waga, wiek, miejsce na zdjęcie, opis), 4 strony fotopułapek,
 2 podsumowania sezonu, notatki.
 

@@ -298,54 +298,6 @@ def sky_options(c, x, y, size=7.2):
         x += 21.5 + pdfmetrics.stringWidth(lab, "Sans", size) + 4
 
 
-# Sylwetka byka z boku (x w prawo, y w górę; szer. ~1.0, wys. ~1.36). Trzeci element: ostry narożnik.
-DEER_BODY = [
- (0.00,0.88,0),(0.06,0.96,0),(0.12,1.00,1),(0.15,1.02,0),(0.20,1.10,1),(0.20,1.01,0),(0.24,0.92,0),(0.30,0.80,0),
- (0.38,0.74,0),(0.60,0.72,0),(0.85,0.72,0),(0.95,0.70,0),(0.98,0.74,1),(1.01,0.70,1),(0.97,0.66,0),(0.97,0.58,0),
- (0.95,0.48,0),(0.975,0.30,1),(0.955,0.02,1),(0.92,0.0,1),(0.925,0.26,0),(0.89,0.38,0),(0.86,0.44,1),
- (0.845,0.36,0),(0.875,0.26,1),(0.86,0.02,1),(0.825,0.0,1),(0.835,0.24,0),(0.815,0.38,0),
- (0.70,0.44,0),(0.50,0.44,0),(0.42,0.42,0),(0.415,0.30,0),(0.415,0.02,1),(0.375,0.0,1),(0.378,0.28,0),(0.37,0.36,1),
- (0.358,0.26,0),(0.355,0.02,1),(0.315,0.0,1),(0.318,0.28,0),(0.31,0.42,0),(0.29,0.52,0),(0.24,0.66,0),(0.17,0.80,0),
- (0.10,0.83,0),(0.04,0.84,0)]
-DEER_ANTLERS = [[(0.13,1.00),(0.17,1.12),(0.15,1.22),(0.08,1.27),(0.02,1.25)],[(0.15,1.06),(0.11,1.12)],[(0.165,1.17),(0.20,1.26)],[(0.13,1.235),(0.145,1.34)],[(0.08,1.265),(0.075,1.36)]]
-
-
-def _smooth_closed(c, pts, x, y, k):
-    """Zamknięta krzywa Catmulla-Roma przez punkty (narożniki oznaczone 1 zostają ostre)."""
-    P = [(x + a * k, y + b * k, sh) for a, b, sh in pts]
-    p = c.beginPath()
-    p.moveTo(P[0][0], P[0][1])
-    n = len(P)
-    for i in range(n):
-        p0, p1, p2, p3 = P[i - 1], P[i], P[(i + 1) % n], P[(i + 2) % n]
-        t = 0.0 if (p1[2] or p2[2]) else 1 / 6
-        p.curveTo(p1[0] + (p2[0] - p0[0]) * t, p1[1] + (p2[1] - p0[1]) * t,
-                  p2[0] - (p3[0] - p1[0]) * t, p2[1] - (p3[1] - p1[1]) * t, p2[0], p2[1])
-    p.close()
-    return p
-
-
-def deer_outline(c, x, y, h):
-    """Kontur jelenia (lewy dolny róg x, y; wysokość h) do zaznaczenia miejsca trafienia."""
-    k = h / 1.36
-    c.saveState()
-    c.setLineJoin(1); c.setLineCap(1)
-    c.setFillColor(Color(0.93, 0.93, 0.91)); c.setStrokeColor(INK); c.setLineWidth(0.9)
-    c.drawPath(_smooth_closed(c, DEER_BODY, x, y, k), stroke=1, fill=1)
-    c.setLineWidth(1.3)
-    for line in DEER_ANTLERS:
-        q = c.beginPath()
-        q.moveTo(x + line[0][0] * k, y + line[0][1] * k)
-        for px, py in line[1:]:
-            q.lineTo(x + px * k, y + py * k)
-        c.drawPath(q, stroke=1, fill=0)
-    # strefa serca i płuc – przerywany owal tuż za przednią nogą
-    c.setDash(2, 2); c.setLineWidth(0.6); c.setStrokeColor(SOFT)
-    c.ellipse(x + 0.37 * k, y + 0.47 * k, x + 0.53 * k, y + 0.63 * k, stroke=1, fill=0)
-    c.restoreState()
-    return k * 1.02   # szerokość rysunku
-
-
 def section(c, x0, x1, y, text, size=9.5):
     c.setFillColor(INK)
     c.setFont("Sans-Bold", size)
@@ -475,23 +427,19 @@ def harvest_page(b, n):
     cols = [(("",), 0.34), (("Left",), 0.22), (("Right",), 0.22), (("Total",), 0.22)]
     labels = ["Points", "Main beam", "Inside spread", "Est. weight (lbs)", "Est. age"]
     bottom = b.table(cols, 5, y - 7, y - 7 - 0.3 * INCH - 5 * 0.29 * INCH, first_col_values=labels)
-    y = bottom - 14
-    # miejsce trafienia (kontur jelenia) i zdjęcie obok siebie
-    ph = 2.0 * INCH
-    half = (x1 - x0 - 10) / 2
-    c.setStrokeColor(INK); c.setLineWidth(0.8)
-    c.roundRect(x0, y - ph, half, ph, 5, stroke=1, fill=0)
-    c.setFillColor(INK); c.setFont("Sans-Bold", 8)
-    c.drawString(x0 + 7, y - 13, "SHOT PLACEMENT – mark the hit")
-    dh = ph - 30
-    dw = dh / 1.36 * 1.02
-    deer_outline(c, x0 + (half - dw) / 2, y - ph + 8, dh)
-    px = x0 + half + 10
-    c.setStrokeColor(GRID); c.setDash(3, 3)
-    c.rect(px, y - ph, half, ph, stroke=1, fill=0)
+    y = bottom - 20
+    # miejsce trafienia – lista do zaznaczenia (czytelniej niż rysunek)
+    options(c, x0, y, "Hit:", ["Heart", "Double lung", "Single lung", "Liver", "Neck"], gap=6)
+    y -= 17
+    options(c, x0 + 24, y, "", ["Shoulder", "Spine", "Gut", "Other: ________"], gap=6)
+    y -= 14
+    # zdjęcie
+    ph = 1.75 * INCH
+    c.setStrokeColor(GRID); c.setLineWidth(0.8); c.setDash(3, 3)
+    c.rect(x0, y - ph, x1 - x0, ph, stroke=1, fill=0)
     c.setDash()
     c.setFillColor(SOFT); c.setFont("Sans", 9)
-    c.drawCentredString(px + half / 2, y - ph / 2 - 3, "Tape a photo here")
+    c.drawCentredString((x0 + x1) / 2, y - ph / 2 - 3, "Tape a photo here")
     y -= ph + 16
     section(c, x0, x1, y, "The story")
     b.lines(y - 2, y0, step=0.3 * INCH)
