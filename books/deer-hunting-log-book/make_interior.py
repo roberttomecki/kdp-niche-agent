@@ -18,6 +18,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 HERE = Path(__file__).resolve().parent
+DEER_ART = HERE / "art" / "deer.png"   # ilustracja jelenia (dostarczona przez Roberta), tło wybielone
 FONTS = HERE.parent / "password-log-book" / "fonts"
 pdfmetrics.registerFont(TTFont("Sans", str(FONTS / "DejaVuSans.ttf")))
 pdfmetrics.registerFont(TTFont("Sans-Bold", str(FONTS / "DejaVuSans-Bold.ttf")))
@@ -433,13 +434,22 @@ def harvest_page(b, n):
     y -= 17
     options(c, x0 + 24, y, "", ["Shoulder", "Spine", "Gut", "Other: ________"], gap=6)
     y -= 14
-    # zdjęcie
-    ph = 1.75 * INCH
-    c.setStrokeColor(GRID); c.setLineWidth(0.8); c.setDash(3, 3)
-    c.rect(x0, y - ph, x1 - x0, ph, stroke=1, fill=0)
+    # miejsce trafienia na rysunku jelenia + zdjęcie obok
+    ph = 1.85 * INCH
+    half = (x1 - x0 - 10) / 2
+    c.setStrokeColor(INK); c.setLineWidth(0.8)
+    c.roundRect(x0, y - ph, half, ph, 5, stroke=1, fill=0)
+    c.setFillColor(INK); c.setFont("Sans-Bold", 7.5)
+    c.drawString(x0 + 7, y - 12, "MARK THE HIT")
+    dh = ph - 22
+    dw = dh * 1295 / 1331
+    c.drawImage(str(DEER_ART), x0 + (half - dw) / 2, y - ph + 5, dw, dh)
+    px = x0 + half + 10
+    c.setStrokeColor(GRID); c.setDash(3, 3)
+    c.rect(px, y - ph, half, ph, stroke=1, fill=0)
     c.setDash()
     c.setFillColor(SOFT); c.setFont("Sans", 9)
-    c.drawCentredString((x0 + x1) / 2, y - ph / 2 - 3, "Tape a photo here")
+    c.drawCentredString(px + half / 2, y - ph / 2 - 3, "Tape a photo here")
     y -= ph + 16
     section(c, x0, x1, y, "The story")
     b.lines(y - 2, y0, step=0.3 * INCH)
@@ -454,7 +464,9 @@ def build(out: Path, author: str) -> tuple[Path, int]:
     # 1 – tytuł
     x0, y0, x1, y1 = b.box()
     mid = (x0 + x1) / 2
-    compass(c, mid, y1 - 1.25 * INCH, 0.42 * INCH)
+    dh = 2.05 * INCH
+    dw = dh * 1295 / 1331
+    c.drawImage(str(DEER_ART), mid - dw / 2, y1 - 0.05 * INCH - dh, dw, dh)
     c.setFillColor(INK)
     c.setFont("Sans-Bold", 30)
     c.drawCentredString(mid, y1 - 2.55 * INCH, "DEER HUNTING")

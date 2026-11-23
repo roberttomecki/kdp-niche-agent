@@ -21,9 +21,11 @@ młodzież), lista sprzętu z polami wyboru (24 pozycje plus puste), 2 strony st
 typ, GPS, wiatr, dojście), 4 strony szkiców terenu (siatka kropek, strzałka północy),
 **80 stron polowań** (data, stanowisko, z kim, godziny, broń, róża wiatrów do zakreślenia, temperatura,
 prędkość wiatru, niebo z ikonami pogody, ciśnienie, faza księżyca, tabela zaobserwowanych jeleni: byki, łanie, młode,
-oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, lista miejsc trafienia do zaznaczenia, tropienie,
+oddany strzał, odległość, trafienie, wabienie i zapachy, notatki), **8 kart pozyskania** (strzał, lista miejsc trafienia i rysunek jelenia do zaznaczenia trafienia, tropienie,
 numer znacznika, poroże L/P, waga, wiek, miejsce na zdjęcie, opis), 4 strony fotopułapek,
 2 podsumowania sezonu, notatki.
+
+Ilustracja jelenia (`art/deer.png`, dostarczona przez Roberta, tło wybielone) jest na stronie tytułowej i na kartach pozyskania.
 
 Format bez spadu: marginesy 0,5" od grzbietu, 0,45" na zewnątrz, 0,5" góra i dół. Fonty osadzone.
 Sprawdzone skryptem: 0 elementów poza marginesami KDP.
@@ -41,7 +43,7 @@ na kod kreskowy KDP.
 - **ISBN:** Publish without an ISBN
 - **Ink and paper:** Black & white interior, white paper
 - **Trim size:** 6 x 9 in. **Bleed:** **No Bleed**. **Cover finish:** **Matte**
-- **AI-generated content:** Yes (teksty i grafika – Claude)
+- **AI-generated content:** Yes – teksty i grafika (Claude); jeśli ilustracja jelenia też jest z generatora AI, zaznacz ją w pytaniu o obrazy (Images)
 - **Cena:** **9,99 $**. Druk około 2,32 $ (1,00 $ + 110 × 0,012 $), tantiemy około **3,67 $**
 - Po wgraniu sprawdź całość w Previewerze
 
