@@ -171,6 +171,7 @@ def main():
     nt.add_argument("--days", type=int, default=14)
     ro = sub.add_parser("rotate-niches", help="wybierz teraz nisze do obserwacji (normalnie po run)")
     common(ro, seeds=False)
+    ro.add_argument("--fresh", action="store_true", help="wyczyść bieżący automatyczny wybór i wybierz od nowa")
     sub.add_parser("telegram", help="połącz z botem Telegram (TELEGRAM_TOKEN w .env) i wyślij test")
     sub.add_parser("bot", help="bot Telegram odpowiadający na komendy (/sprawdz, /moje …)")
 
@@ -222,7 +223,8 @@ def main():
             n = watch_niches(f, db, market, NICHES)
             log.info("[%s] obserwowane nisze: zmierzono %d", market, n)
         elif args.cmd == "rotate-niches":
-            print(weekly_rotation(db, market, NICHES, WATCH) or "Brak zmian.")
+            if not weekly_rotation(db, market, NICHES, WATCH, args.fresh):
+                print("Brak zmian.")
         elif args.cmd == "niche-trends":
             print(niche_trends(db, market, NICHES, args.days))
         elif args.cmd == "mine":

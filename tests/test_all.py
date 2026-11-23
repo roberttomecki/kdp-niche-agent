@@ -232,3 +232,14 @@ def test_niche_auto_rotation():
         txt = nw.weekly_rotation(db, "us", niches, watch)
         assert "Koniec" in txt and "golf log book" not in nw.load_auto(niches)
         assert "(auto" not in nw.niche_trends(db, "us", niches)
+
+
+def test_niche_junk_and_book_topics():
+    from kdp import nichewatch as nw
+    assert not nw.words_in_titles("guitar tab stroller", ["Guitar Tab Book", "Blank Guitar Tablature"])
+    assert nw.words_in_titles("coin collecting treasure hunt for kids", ["Coin Collecting for Kids", "Treasure Hunt Coin Book"])
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d); (root / "books" / "deer-hunting-log-book").mkdir(parents=True)
+        w = root / "watch.txt"; w.write_text("B0HSCT2JS5 Password Log Book\n")
+        labels = nw.own_labels(w)
+        assert "deer hunting log book" in labels and "password log book" in labels

@@ -18,7 +18,7 @@ from . import notify
 from .analyze import analyze_keyword
 from .http import Blocked
 from .markets import get_market
-from .score import relevant
+from .score import relevant, topic_words
 
 log = logging.getLogger("kdp")
 SALE_DROP = 0.8           # BSR spadł do ≤80% poprzedniego pomiaru → ktoś kupił
@@ -184,8 +184,19 @@ def niche_trends(db, market: str, path: Path, days: int = 14) -> str:
 
 
 def own_labels(watch: Path) -> list[str]:
+    """Tematy Twoich książek: nazwy z watch.txt + katalogi w books/ (także książki jeszcze w recenzji)."""
     from .watch import load_watchlist
-    return [label.lower() for _, label in load_watchlist(watch) if label]
+    labels = [label.lower() for _, label in load_watchlist(watch) if label]
+    books = watch.parent / "books"
+    if books.is_dir():
+        labels += [d.name.replace("-", " ") for d in books.iterdir() if d.is_dir()]
+    return labels
+
+
+def words_in_titles(kw: str, titles: list[str]) -> bool:
+    """Każde słowo tematyczne frazy musi wystąpić w którymś tytule z topu.
+    Odrzuca śmieciowe podpowiedzi autocomplete typu „guitar tab stroller”, „stamp album keychain”."""
+    return all(any(relevant(t, w) for t in titles) for w in topic_words(kw))
 
 
 def pick_candidates(db, market: str, path: Path, watch: Path, n: int = AUTO_PICK,
@@ -213,6 +224,8 @@ def pick_candidates(db, market: str, path: Path, watch: Path, n: int = AUTO_PICK
             continue
         if tops and sum(relevant(p.get("title"), kw) for p in tops) < len(tops) / 2:
             continue                                          # w wynikach głównie coś innego niż fraza
+        if tops and not words_in_titles(kw, [p.get("title") or "" for p in tops]):
+            continue                                          # słowo z frazy nie występuje w żadnym tytule
         if any(relevant(kw, other) and relevant(other, kw) for other in picked + list(watched)):
             continue                                          # nie bierz wariantów fraz już wybranych/obserwowanych
         picked.append(kw)
@@ -221,9 +234,12 @@ def pick_candidates(db, market: str, path: Path, watch: Path, n: int = AUTO_PICK
     return picked
 
 
-def weekly_rotation(db, market: str, path: Path, watch: Path) -> str:
-    """Po poniedziałkowym przebiegu: zakończ obserwacje po AUTO_DAYS dniach (werdykt) i dodaj nowe."""
+def weekly_rotation(db, market: str, path: Path, watch: Path, fresh: bool = False) -> str:
+    """Po poniedziałkowym przebiegu: zakończ obserwacje po AUTO_DAYS dniach (werdykt) i dodaj nowe.
+    fresh=True: wyczyść bieżący automatyczny wybór (bez werdyktu) i wybierz od nowa."""
     now = time.time()
+    if fresh:
+        save_auto(path, {})
     auto = load_auto(path)
     niches = {x["keyword"]: x for x in db.latest_niches(market)}
     done = [kw for kw, ts in auto.items() if now - ts >= (AUTO_DAYS - 0.5) * 86400]

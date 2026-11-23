@@ -36,6 +36,11 @@ def _stem(w: str) -> str:
     return w[:5]
 
 
+def topic_words(keyword: str) -> list[str]:
+    """Słowa tematyczne frazy (bez ogólnych typu journal, log, book, for, kids)."""
+    return [w for w in re.findall(r"[a-z0-9']+", keyword.lower()) if w not in GENERIC and len(w) > 2]
+
+
 def relevant(title: str | None, keyword: str | None) -> bool:
     """Czy produkt pasuje do frazy: musi zawierać choć jedno słowo tematyczne frazy.
 
@@ -44,7 +49,7 @@ def relevant(title: str | None, keyword: str | None) -> bool:
     """
     if not keyword or not title:
         return True
-    topic = [w for w in re.findall(r"[a-z0-9']+", keyword.lower()) if w not in GENERIC and len(w) > 2]
+    topic = topic_words(keyword)
     if not topic:
         return True
     words = {_stem(w) for w in re.findall(r"[a-z0-9']+", title.lower())}
