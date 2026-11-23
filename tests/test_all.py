@@ -176,3 +176,16 @@ def test_bot_commands():
         assert "Brak analizy" in b.handle("/raport")
         b.cmd_sprawdz = lambda a: "ok"; assert b.handle("/sprawdź") == "ok"   # polskie znaki → /sprawdz
         assert b.handle("/Dodaj").startswith("Użycie")
+
+def test_badge_relevance():
+    from kdp.score import relevant
+    from kdp.screen import screen_score
+    kw = "hunting journal for teens"
+    assert not relevant("Horizon Group USA Tab Journal with 5 Dividers, Kpop Demon Hunters HUNTR/X", kw)
+    assert relevant("Deer Hunting Log Book: Deer Hunting Journal Notebook", kw)
+    assert relevant("Anything at all", "journal for men")      # brak słów tematycznych → bez filtra
+    books = [{"sponsored": False, "is_book": True, "title": f"Hunting Journal {i}", "reviews": 3, "bought_month": 0}
+             for i in range(6)]
+    kpop = {"sponsored": False, "is_book": True, "title": "Kpop Demon Hunters Tab Journal", "reviews": 3, "bought_month": 2000}
+    assert screen_score(books + [kpop], 2000, 5, kw)["badges_sum"] == 0
+    assert screen_score(books + [kpop], 2000, 5)["badges_sum"] == 2000

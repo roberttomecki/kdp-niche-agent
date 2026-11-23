@@ -15,7 +15,7 @@ from .db import DB
 from .http import Blocked, Fetcher
 from .markets import Market
 from .parse import parse_serp
-from .score import clamp
+from .score import clamp, relevant
 
 log = logging.getLogger("kdp")
 
@@ -23,7 +23,7 @@ SCHEMA = """CREATE TABLE IF NOT EXISTS screens (
     market TEXT, keyword TEXT, ts REAL, score REAL, data TEXT, PRIMARY KEY (market, keyword, ts));"""
 
 
-def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
+def screen_score(items: list[dict], total: int | None, hits: int, keyword: str | None = None) -> dict:
     org_all = [i for i in items if not i["sponsored"]][:16]
     org = [i for i in org_all if i.get("is_book", True)]
     if len(org) < 5:
@@ -31,9 +31,10 @@ def screen_score(items: list[dict], total: int | None, hits: int) -> dict:
                 "low_with_badge": 0, "median_reviews": 0, "total_results": total, "keyword_hits": hits,
                 "sponsored": len(items) - len(org_all), "not_books": True}
     reviews = [i.get("reviews") or 0 for i in org]
-    badges = [i["bought_month"] for i in org if i.get("bought_month")]
+    # odznaki liczymy tylko dla produktów pasujących do frazy (nie „Kpop Demon Hunters” dla „hunting”)
+    badges = [i["bought_month"] for i in org if i.get("bought_month") and relevant(i.get("title"), keyword)]
     low = [i for i in org if (i.get("reviews") or 0) < 50]
-    low_badge = sum(1 for i in low if i.get("bought_month"))
+    low_badge = sum(1 for i in low if i.get("bought_month") and relevant(i.get("title"), keyword))
     med_rev = median(reviews) if reviews else 0
     demand = clamp(math.log10(1 + sum(badges)) / 3.5)          # ~3000 kupionych/mies. => 1.0
     entry = clamp(len(low) / 6)                                 # nowi/słabi w topie 16
@@ -79,7 +80,7 @@ def screen_keywords(f: Fetcher, db: DB, m: Market, keywords: list[tuple]) -> lis
         serp = parse_serp(html)
         if not serp["items"]:
             continue
-        r = screen_score(serp["items"], serp["total_results"], hits)
+        r = screen_score(serp["items"], serp["total_results"], hits, kw)
         if r.get("not_books"):  # usuń stare, błędne wyniki pełnej analizy dla tej frazy
             db.c.execute("DELETE FROM niches WHERE market=? AND keyword=?", (m.code, kw))
         db.c.execute("INSERT OR REPLACE INTO screens VALUES (?,?,?,?,?)",

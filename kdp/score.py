@@ -4,6 +4,7 @@ Wszystko tu to heurystyki – służą do porównywania nisz między sobą,
 a nie do przewidywania dokładnej sprzedaży.
 """
 import math
+import re
 from statistics import median
 
 # BSR -> sprzedane egzemplarze/dzień, książki drukowane amazon.com (zgrubne punkty orientacyjne)
@@ -25,12 +26,37 @@ def sales_per_day(bsr: int | None, factor: float = 1.0) -> float:
     return pts[-1][1] * factor
 
 
+GENERIC = set("""a an and the for of with to in on by my your our book books log logbook logs journal journals
+notebook notebooks planner planners tracker record records diary organizer keeper large print kids kid
+teens teen boys girls men women adults adult seniors gift gifts simple small size inch inches pages page
+6x9 8.5x11 lined blank""".split())
+
+
+def _stem(w: str) -> str:
+    return w[:5]
+
+
+def relevant(title: str | None, keyword: str | None) -> bool:
+    """Czy produkt pasuje do frazy: musi zawierać choć jedno słowo tematyczne frazy.
+
+    „hunting journal for teens” → słowo tematyczne „hunting”; „Kpop Demon Hunters …” nie pasuje
+    (hunters ≠ hunting), więc jego odznaka „2000+ bought” nie zawyża popytu niszy.
+    """
+    if not keyword or not title:
+        return True
+    topic = [w for w in re.findall(r"[a-z0-9']+", keyword.lower()) if w not in GENERIC and len(w) > 2]
+    if not topic:
+        return True
+    words = {_stem(w) for w in re.findall(r"[a-z0-9']+", title.lower())}
+    return any(_stem(w) in words for w in topic)
+
+
 def clamp(x, lo=0.0, hi=1.0):
     return max(lo, min(hi, x))
 
 
 def score_niche(products: list[dict], total_results: int | None, factor: float,
-                keyword_hits: int = 0) -> dict:
+                keyword_hits: int = 0, keyword: str | None = None) -> dict:
     """products: organiczne wyniki z top N, każdy z polami bsr, reviews, price, indie."""
     with_bsr = [p for p in products if p.get("bsr")]
     bsrs = [p["bsr"] for p in with_bsr]
@@ -43,8 +69,9 @@ def score_niche(products: list[dict], total_results: int | None, factor: float,
     # „Słabi, a sprzedają”: mało opinii, a dobry BSR -> da się wejść
     weak_sellers = sum(1 for p in products if (p.get("reviews") or 0) < 50 and (
         (p.get("bsr") and sales_per_day(p["bsr"], factor) >= 0.5)
-        or (p.get("bought_month") or 0) >= 15))
-    badges = [p["bought_month"] for p in products if p.get("bought_month")]
+        or ((p.get("bought_month") or 0) >= 15 and relevant(p.get("title"), keyword))))
+    badges = [p["bought_month"] for p in products
+              if p.get("bought_month") and relevant(p.get("title"), keyword)]
     bought_top = sum(badges)
     med_reviews = median(reviews) if reviews else 0
     indie_share = sum(1 for p in products if p.get("indie")) / len(products) if products else 0

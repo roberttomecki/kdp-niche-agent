@@ -49,7 +49,7 @@ def analyze_keyword(f: Fetcher, db: DB, m: Market, kw: str, hits: int = 0,
         products.append(merged)
 
     db.save_serp(m.code, kw, serp["total_results"], serp["items"])
-    result = score_niche(products, serp["total_results"], m.sales_factor, hits)
+    result = score_niche(products, serp["total_results"], m.sales_factor, hits, kw)
     result["sponsored_count"] = sum(1 for i in serp["items"] if i["sponsored"])
     result["top_products"] = [
         {k: p.get(k) for k in ("asin", "title", "price", "reviews", "rating", "bsr",
