@@ -25,6 +25,7 @@ SALE_DROP = 0.8           # BSR spadł do ≤80% poprzedniego pomiaru → ktoś 
 AUTO_PICK = 5             # ile nisz dodać automatycznie co tydzień
 AUTO_DAYS = 14            # jak długo obserwować niszę dodaną automatycznie
 AUTO_MIN_SCORE = 55
+DONE_DAYS = 90            # po zakończonej obserwacji nie wybieraj tej niszy ponownie przez 90 dni
 
 
 def _auto_path(path: Path) -> Path:
@@ -40,6 +41,18 @@ def load_auto(path: Path) -> dict[str, float]:
 
 def save_auto(path: Path, auto: dict[str, float]):
     _auto_path(path).write_text(json.dumps(auto, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _done_path(path: Path) -> Path:
+    return path.with_name(path.stem + "_done.json")
+
+
+def load_done(path: Path) -> dict[str, float]:
+    """Nisze, których automatyczna obserwacja już się skończyła (nie wybieramy ich ponownie przez DONE_DAYS)."""
+    try:
+        return json.loads(_done_path(path).read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return {}
 
 
 def load_manual(path: Path) -> list[str]:
@@ -178,7 +191,8 @@ def own_labels(watch: Path) -> list[str]:
 def pick_candidates(db, market: str, path: Path, watch: Path, n: int = AUTO_PICK,
                     max_age_days: float = 8) -> list[str]:
     """Najlepsze świeże nisze z raportu, bez już obserwowanych i bez nisz Twoich książek."""
-    watched = set(load_niche_watch(path))
+    recent_done = {k for k, t in load_done(path).items() if time.time() - t < DONE_DAYS * 86400}
+    watched = set(load_niche_watch(path)) | recent_done
     labels = own_labels(watch)
     from .watch import load_watchlist
     own_asins = {a for a, _ in load_watchlist(watch)}
@@ -199,8 +213,8 @@ def pick_candidates(db, market: str, path: Path, watch: Path, n: int = AUTO_PICK
             continue
         if tops and sum(relevant(p.get("title"), kw) for p in tops) < len(tops) / 2:
             continue                                          # w wynikach głównie coś innego niż fraza
-        if any(relevant(kw, other) and relevant(other, kw) for other in picked):
-            continue                                          # nie bierz 3 wariantów tej samej frazy
+        if any(relevant(kw, other) and relevant(other, kw) for other in picked + list(watched)):
+            continue                                          # nie bierz wariantów fraz już wybranych/obserwowanych
         picked.append(kw)
         if len(picked) >= n:
             break
@@ -222,6 +236,9 @@ def weekly_rotation(db, market: str, path: Path, watch: Path) -> str:
                 msg += _line(kw, niche_stats(db, market, n, auto[kw] - 3600))
             auto.pop(kw)
         msg.append("Żeby obserwować dalej na stałe: /obserwuj fraza")
+        hist = load_done(path)
+        hist.update({kw: now for kw in done})
+        _done_path(path).write_text(json.dumps(hist, ensure_ascii=False, indent=1), encoding="utf-8")
     save_auto(path, auto)
     new = pick_candidates(db, market, path, watch)
     for kw in new:
