@@ -70,3 +70,16 @@ This logbook is a place to record your driving. It is not tax advice.
 
 **Kategorie (propozycja):** Business & Money → Small Business & Entrepreneurship → Bookkeeping;
 Business & Money → Taxation → Small Business; Reference → General.
+
+## A+ Content (27.11.2026)
+
+`python aplus/make_aplus.py` → `output/aplus/` (styl okładki: granat, bursztyn, licznik, droga):
+1. `1_header_1940x1200.jpg` – moduł **Standard Image Header With Text**
+2. `2a_square_trips`, `2b_square_expenses`, `2c_square_summary` (1200) – moduł **Standard Three Images & Text**
+   - *2,000 trips* – Date, destination and purpose, odometer start and end, miles, business or personal.
+   - *Expenses* – Six pages for parking, tolls, fuel and repairs, kept next to your mileage.
+   - *Annual summary* – Month-by-month business and personal miles on a single page.
+3. `3_banner_1940x600.jpg` – moduł **Standard Image & Dark Text Overlay** (bez dodatkowego tekstu)
+
+Alt-teksty: „Mileage log book trip page”, „vehicle expenses page”, „annual mileage summary page”.
+Wspólne narzędzia: `tools/aplus_kit.py`, krój Atkinson Hyperlegible Next (`tools/fonts`, OFL).

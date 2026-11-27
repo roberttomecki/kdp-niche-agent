@@ -81,3 +81,17 @@ kupujący znają notesy z prawdziwymi przekładkami (Clever Fox, JUBTIC) i inacz
 7. private address book for parents
 
 **Cena:** 9,99–12,99 $ (mediana w niszy ok. 11,49 $).
+
+## A+ Content (27.11.2026)
+
+`python aplus/make_aplus.py` → `output/aplus/` (styl okładki: zieleń, mosiądz, zakładki A–Z):
+1. `1_header_1940x1200.jpg` – moduł **Standard Image Header With Text**
+2. `2a_square_large_print`, `2b_square_az_edge`, `2c_square_email_wifi` (1200) – moduł **Standard Three Images & Text**
+   - *Big, clear print* – Wide lines to write on and two spare lines when a password changes.
+   - *A–Z on the edge* – Each letter is printed to the page edge, so the book falls open near the right letter.
+   - *Email & Wi-Fi* – Separate pages for email accounts and your home internet details.
+3. `3_banner_1940x600.jpg` – moduł **Standard Image & Dark Text Overlay** (bez dodatkowego tekstu)
+
+Kwadrat 2b pokazuje krawędź zamkniętej książki: znaczniki liter schodkami (sprawdzone na PDF – zakładki schodzą
+od 6% do 87% wysokości strony). Alt-teksty: „large print password page”, „A–Z index printed on the page edge”,
+„email accounts page”. Przy okazji wklej opis przez Source jako HTML, żeby usunąć podwójne punktory.
