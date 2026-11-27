@@ -85,7 +85,7 @@ def main():
 
     # 2. trzy kwadraty 1200 × 1200
     bg = Image.new("RGB", (1200, 1200), GROUND)
-    caption_square(bg, a1, (0.06, 0.03, 0.94, 0.52), "Big, clear print",
+    caption_square(bg, a1, (0.0, 0.03, 1.0, 0.5), "Big, clear print",
                    "Wide lines to write on and two spare lines when a password changes.",
                    TEXT, GROUND, "#4F6B62", BRASS).save(OUT / "2a_square_large_print_1200.jpg", quality=92)
     fore_edge().save(OUT / "2b_square_az_edge_1200.jpg", quality=92)
