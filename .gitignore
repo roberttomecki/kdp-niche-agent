@@ -9,3 +9,6 @@ watch.txt
 nisze.txt
 nisze_auto.json
 nisze_done.json
+books/*/output/art/front_s*
+books/*/output/art/back_s*
+*.render.html

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<!--
+    THIS IS A TEMPLATE THAT SHOULD BE USED EVERY TIME AND MODIFIED.
+    WHAT TO KEEP:
+    ✓ Overall structure (header, sidebar, main content)
+    ✓ Anthropic branding (colors, fonts, layout)
+    ✓ Seed navigation section (always include this)
+    ✓ Self-contained artifact (everything inline)
+
+    WHAT TO CREATIVELY EDIT:
+    ✗ The p5.js algorithm (implement YOUR vision)
+    ✗ The parameters (define what YOUR art needs)
+    ✗ The UI controls (match YOUR parameters)
+
+    Let your philosophy guide the implementation.
+    The world is your oyster - be creative!
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Stitch – generative covers</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Anthropic Brand Colors */
+        :root {
+            --anthropic-dark: #141413;
+            --anthropic-light: #faf9f5;
+            --anthropic-mid-gray: #b0aea5;
+            --anthropic-light-gray: #e8e6dc;
+            --anthropic-orange: #d97757;
+            --anthropic-blue: #6a9bcc;
+            --anthropic-green: #788c5d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--anthropic-light) 0%, #f5f3ee 100%);
+            min-height: 100vh;
+            color: var(--anthropic-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(20, 20, 19, 0.1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar h1 {
+            font-family: 'Lora', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .sidebar .subtitle {
+            color: var(--anthropic-mid-gray);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 32px;
+        }
+
+        .control-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--anthropic-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-section h3::before {
+            content: '•';
+            color: var(--anthropic-orange);
+            font-weight: bold;
+        }
+
+        /* Seed Controls */
+        .seed-input {
+            width: 100%;
+            background: var(--anthropic-light);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--anthropic-light-gray);
+            text-align: center;
+        }
+
+        .seed-input:focus {
+            outline: none;
+            border-color: var(--anthropic-orange);
+            box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+            background: white;
+        }
+
+        .seed-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .regen-button {
+            margin-bottom: 0;
+        }
+
+        /* Parameter Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: var(--anthropic-light-gray);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: #c86641;
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .value-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Color Pickers */
+        .color-group {
+            margin-bottom: 16px;
+        }
+
+        .color-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            margin-bottom: 4px;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+        }
+
+        /* Buttons */
+        .button {
+            background: var(--anthropic-orange);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            background: #c86641;
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.secondary {
+            background: var(--anthropic-blue);
+        }
+
+        .button.secondary:hover {
+            background: #5a8bb8;
+        }
+
+        .button.tertiary {
+            background: var(--anthropic-green);
+        }
+
+        .button.tertiary:hover {
+            background: #6b7b52;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-row .button {
+            flex: 1;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(20, 20, 19, 0.1);
+            background: white;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--anthropic-mid-gray);
+        }
+
+        /* Responsive - Stack on mobile */
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .canvas-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Control Sidebar -->
+        <div class="sidebar">
+            <!-- Headers (CUSTOMIZE THIS FOR YOUR ART) -->
+            <h1>Golden Stitch</h1>
+            <div class="subtitle">Vogel phyllotaxis of crochet chain loops. Colour by arithmetic: arm = n mod F, shifted at Fibonacci rounds.</div>
+
+            <!-- Seed Section (ALWAYS KEEP THIS) -->
+            <div class="control-section">
+                <h3>Seed</h3>
+                <input type="number" id="seed-input" class="seed-input" value="1" onchange="updateSeed()">
+                <div class="seed-controls">
+                    <button class="button secondary" onclick="previousSeed()">← Prev</button>
+                    <button class="button secondary" onclick="nextSeed()">Next →</button>
+                </div>
+                <button class="button tertiary regen-button" onclick="randomSeedAndUpdate()">↻ Random</button>
+            </div>
+
+            <!-- Parameters Section (CUSTOMIZE THIS FOR YOUR ART) -->
+            <div class="control-section">
+                <h3>Parameters</h3>
+                
+                <div class="control-group">
+                    <label>Stitches (units)</label>
+                    <div class="slider-container">
+                        <input type="range" id="count" min="300" max="2400" step="50" value="1300" oninput="updateParam('count', this.value)">
+                        <span class="value-display" id="count-value">1300</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Spacing c (px)</label>
+                    <div class="slider-container">
+                        <input type="range" id="spacing" min="7" max="22" step="0.2" value="15.8" oninput="updateParam('spacing', this.value)">
+                        <span class="value-display" id="spacing-value">15.8</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Spiral arms F (8·13·21·34)</label>
+                    <div class="slider-container">
+                        <input type="range" id="armsIdx" min="0" max="3" step="1" value="2" oninput="updateParam('armsIdx', this.value)">
+                        <span class="value-display" id="armsIdx-value">21</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Colour change at Fibonacci rounds</label>
+                    <div class="slider-container">
+                        <input type="range" id="roundsF" min="0" max="1" step="1" value="1" oninput="updateParam('roundsF', this.value)">
+                        <span class="value-display" id="roundsF-value">1</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Hand-made jitter</label>
+                    <div class="slider-container">
+                        <input type="range" id="jitter" min="0" max="1" step="0.02" value="0.18" oninput="updateParam('jitter', this.value)">
+                        <span class="value-display" id="jitter-value">0.18</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Loop size</label>
+                    <div class="slider-container">
+                        <input type="range" id="loopScale" min="0.6" max="1.6" step="0.02" value="1.0" oninput="updateParam('loopScale', this.value)">
+                        <span class="value-display" id="loopScale-value">1.0</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Centre x (× width)</label>
+                    <div class="slider-container">
+                        <input type="range" id="cxr" min="0" max="1" step="0.001" value="0.618" oninput="updateParam('cxr', this.value)">
+                        <span class="value-display" id="cxr-value">0.618</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Centre y (× height)</label>
+                    <div class="slider-container">
+                        <input type="range" id="cyr" min="0" max="1" step="0.001" value="0.264" oninput="updateParam('cyr', this.value)">
+                        <span class="value-display" id="cyr-value">0.264</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors Section (OPTIONAL - CUSTOMIZE OR REMOVE) -->
+            <div class="control-section">
+                <h3>Colors</h3>
+                
+                <div class="color-group">
+                    <label>Ground</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="ground" value="#2a1730" onchange="updateColor('ground', this.value)">
+                        <span class="color-value" id="ground-value">#2a1730</span>
+                    </div>
+                </div>
+                <div class="color-group">
+                    <label>Yarn 1</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="yarn1" value="#f2a03d" onchange="updateColor('yarn1', this.value)">
+                        <span class="color-value" id="yarn1-value">#f2a03d</span>
+                    </div>
+                </div>
+                <div class="color-group">
+                    <label>Yarn 2</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="yarn2" value="#e2574c" onchange="updateColor('yarn2', this.value)">
+                        <span class="color-value" id="yarn2-value">#e2574c</span>
+                    </div>
+                </div>
+                <div class="color-group">
+                    <label>Yarn 3</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="yarn3" value="#f6e7cf" onchange="updateColor('yarn3', this.value)">
+                        <span class="color-value" id="yarn3-value">#f6e7cf</span>
+                    </div>
+                </div>
+                <div class="color-group">
+                    <label>Yarn 4</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="yarn4" value="#3fa39a" onchange="updateColor('yarn4', this.value)">
+                        <span class="color-value" id="yarn4-value">#3fa39a</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section (ALWAYS KEEP THIS) -->
+            <div class="control-section">
+                <h3>Actions</h3>
+                <div class="button-row">
+                    <button class="button" onclick="initializeSystem()">Regenerate</button>
+                    <button class="button" onclick="resetParameters()">Reset</button>
+                </div>
+                <div class="button-row" style="margin-top:8px">
+                    <button class="button tertiary" onclick="saveCanvas('golden-stitch-' + params.seed, 'png')">Download PNG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Initializing generative art...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // GENERATIVE ART PARAMETERS - CUSTOMIZE FOR YOUR ALGORITHM
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 1, count: 1300, spacing: 15.8, armsIdx: 2, roundsF: 1, jitter: 0.18, loopScale: 1.0,
+            cxr: 0.618, cyr: 0.264,
+            colors: { ground: '#2a1730', yarn1: '#f2a03d', yarn2: '#e2574c', yarn3: '#f6e7cf', yarn4: '#3fa39a' }
+        };
+        let defaultParams = JSON.parse(JSON.stringify(params));
+        const ARMS = [8, 13, 21, 34];
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // GOLDEN STITCH ALGORITHM (same file renders the print covers: series/golden-stitch/golden_stitch.js)
+        // ═══════════════════════════════════════════════════════════════════════
+        /* Golden Stitch – generative cover art for a book series (p5.js, instance-mode friendly).
+         *
+         * Vogel phyllotaxis: unit n at angle n·GA (golden angle) and radius c·√n.
+         * Colour by arithmetic: spiral arm = n mod F (Fibonacci), shifted at Fibonacci-sized rounds.
+         * Each unit is rendered as a crochet chain loop of plied yarn, aligned with its spiral arm.
+         *
+         * Usage:  GoldenStitch.render(p, cfg)   – p is a p5 instance (or the global p5 in global mode)
+         * All lengths in cfg are in pixels. Same seed → same image.
+         */
+        (function (root) {
+          const GA = Math.PI * (3 - Math.sqrt(5));          // 137.507764…° in radians
+          const FIB = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181];
+        
+          function mix(p, a, b, t) { return p.lerpColor(p.color(a), p.color(b), t); }
+        
+          function grain(p, cfg) {
+            const n = Math.floor(cfg.W * cfg.H / 900 * cfg.grain);
+            p.noStroke();
+            for (let i = 0; i < n; i++) {
+              const light = p.random() < 0.5;
+              p.fill(light ? 255 : 0, light ? 7 : 9);
+              const s = p.random(0.6, 1.8) * cfg.unitPx / 90;
+              p.rect(p.random(cfg.W), p.random(cfg.H), s, s);
+            }
+          }
+        
+          // one chain loop of plied yarn, centred at origin, long axis along +x
+          function yarnLoop(p, L, Wd, sw, col, cfg) {
+            const shadow = mix(p, col, cfg.ground, 0.55);
+            const deep = mix(p, col, '#000000', 0.38);
+            const hi = mix(p, col, '#ffffff', 0.45);
+            p.noFill();
+            // cast shadow on the ground
+            p.stroke(p.red(cfg.shade), p.green(cfg.shade), p.blue(cfg.shade), 120);
+            p.strokeWeight(sw * 1.25);
+            p.ellipse(sw * 0.16, sw * 0.22, L, Wd);
+            // body
+            p.stroke(shadow); p.strokeWeight(sw * 1.08); p.ellipse(0, 0, L, Wd);
+            p.stroke(col); p.strokeWeight(sw * 0.82); p.ellipse(-sw * 0.05, -sw * 0.06, L, Wd);
+            // highlight on the lit side (light from upper left)
+            p.stroke(hi); p.strokeWeight(sw * 0.26);
+            p.arc(-sw * 0.12, -sw * 0.14, L, Wd, Math.PI * 1.02, Math.PI * 1.62);
+            p.arc(-sw * 0.12, -sw * 0.14, L, Wd, Math.PI * 0.02, Math.PI * 0.18);
+            // ply twist: short diagonal ticks across the strand
+            p.stroke(p.red(deep), p.green(deep), p.blue(deep), 150);
+            p.strokeWeight(Math.max(0.6, sw * 0.12));
+            const ticks = cfg.plyTicks;
+            for (let k = 0; k < ticks; k++) {
+              const t = (k + 0.5) / ticks * Math.PI * 2;
+              const x = (L / 2) * Math.cos(t), y = (Wd / 2) * Math.sin(t);
+              let tx = -(L / 2) * Math.sin(t), ty = (Wd / 2) * Math.cos(t);
+              const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+              const nx = -ty, ny = tx, a = sw * 0.36, b = sw * 0.22;
+              p.line(x - nx * a + tx * b, y - ny * a + ty * b, x + nx * a - tx * b, y + ny * a - ty * b);
+            }
+          }
+        
+          function yarnPath(p, pts, sw, col, cfg) {
+            const draw = (dx, dy) => { p.beginShape(); for (const q of pts) p.curveVertex(q[0] + dx, q[1] + dy); p.endShape(); };
+            p.noFill();
+            p.stroke(p.red(cfg.shade), p.green(cfg.shade), p.blue(cfg.shade), 120); p.strokeWeight(sw * 1.2); draw(sw * 0.16, sw * 0.22);
+            p.stroke(mix(p, col, cfg.ground, 0.55)); p.strokeWeight(sw * 1.05); draw(0, 0);
+            p.stroke(col); p.strokeWeight(sw * 0.8); draw(-sw * 0.05, -sw * 0.06);
+            p.stroke(mix(p, col, '#ffffff', 0.45)); p.strokeWeight(sw * 0.22); draw(-sw * 0.18, -sw * 0.2);
+            const deep = mix(p, col, '#000000', 0.38);
+            p.stroke(p.red(deep), p.green(deep), p.blue(deep), 150); p.strokeWeight(Math.max(0.6, sw * 0.12));
+            for (let i = 1; i < pts.length - 2; i++) {
+              const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+              const segs = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / (sw * 0.9)));
+              for (let s = 0; s < segs; s++) {
+                const t = s / segs, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
+                let tx = x1 - x0, ty = y1 - y0; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+                const nx = -ty, ny = tx, a = sw * 0.36, b = sw * 0.22;
+                p.line(x - nx * a + tx * b, y - ny * a + ty * b, x + nx * a - tx * b, y + ny * a - ty * b);
+              }
+            }
+          }
+        
+          function render(p, cfg) {
+            cfg = Object.assign({
+              seed: 1, W: 1200, H: 1200, cx: 742, cy: 458, count: 1300, spacing: 14,
+              armsF: 21, roundsF: true, jitter: 0.18, loopScale: 1.0, grain: 1.0, plyTicks: 9,
+              tail: true, tailAngle: -2.4, unitPx: 90,
+              ground: '#2a1730', shade: '#12070f', yarns: ['#f2a03d', '#e2574c', '#f6e7cf', '#3fa39a'],
+            }, cfg);
+            cfg.shade = p.color(cfg.shade);
+            p.randomSeed(cfg.seed); p.noiseSeed(cfg.seed);
+            p.background(cfg.ground);
+            if (cfg.grain > 0) grain(p, cfg);
+        
+            const c = cfg.spacing, pts = [];
+            for (let n = 1; n <= cfg.count; n++) {
+              const nz = p.noise(n * 0.031, 7.3) - 0.5, nr = p.noise(n * 0.027, 19.1) - 0.5;
+              const a = n * GA + nz * cfg.jitter * 0.12;
+              const r = c * Math.sqrt(n) * (1 + nr * cfg.jitter * 0.08);
+              pts.push([cfg.cx + r * Math.cos(a), cfg.cy + r * Math.sin(a), a, r]);
+            }
+            // round index: how many Fibonacci thresholds the unit has passed
+            const zone = (n) => { let z = 0; for (const f of FIB) if (n > f && f >= 55) z++; return z; };
+            const k = cfg.yarns.length;
+            const d = c * Math.sqrt(Math.PI);                  // mean spacing between neighbours
+        
+            for (let i = pts.length - 1; i >= 0; i--) {
+              const n = i + 1, [x, y] = pts[i];
+              if (x < -d * 2 || y < -d * 2 || x > cfg.W + d * 2 || y > cfg.H + d * 2) continue;
+              // orientation: toward the neighbour on the same arm (n − F)
+              const j = i - cfg.armsF;
+              let ang;
+              if (j >= 0) ang = Math.atan2(y - pts[j][1], x - pts[j][0]);
+              else ang = pts[i][2] + Math.PI / 2;
+              ang += (p.noise(n * 0.05, 3.7) - 0.5) * cfg.jitter * 0.9;
+              const arm = n % cfg.armsF;
+              const ci = (arm + (cfg.roundsF ? zone(n) : 0)) % k;
+              const L = d * 1.18 * cfg.loopScale * (1 + (p.noise(n * 0.09, 11) - 0.5) * cfg.jitter * 0.5);
+              const Wd = L * 0.6, sw = L * 0.21;
+              p.push(); p.translate(x, y); p.rotate(ang);
+              yarnLoop(p, L, Wd, sw, cfg.yarns[ci], cfg);
+              p.pop();
+            }
+        
+            if (cfg.tail) {
+              // the one free strand: leaves the outermost visible round and drifts away
+              let best = pts.length - 1;
+              for (let i = pts.length - 1; i > pts.length - 60; i--) {
+                const a = Math.atan2(pts[i][1] - cfg.cy, pts[i][0] - cfg.cx);
+                const da = Math.abs(Math.atan2(Math.sin(a - cfg.tailAngle), Math.cos(a - cfg.tailAngle)));
+                const db = Math.abs(Math.atan2(Math.sin(Math.atan2(pts[best][1] - cfg.cy, pts[best][0] - cfg.cx) - cfg.tailAngle), Math.cos(Math.atan2(pts[best][1] - cfg.cy, pts[best][0] - cfg.cx) - cfg.tailAngle)));
+                if (da < db) best = i;
+              }
+              let [x, y] = pts[best], heading = cfg.tailAngle;
+              const path = [[x, y], [x, y]], step = d * 0.9;
+              for (let s = 0; s < 220; s++) {
+                heading += (p.noise(s * 0.045, 41) - 0.5) * 0.22;
+                x += Math.cos(heading) * step; y += Math.sin(heading) * step;
+                path.push([x, y]);
+                if (x < -step * 3 || y < -step * 3 || x > cfg.W + step * 3 || y > cfg.H + step * 3) break;
+              }
+              path.push([x, y]);
+              yarnPath(p, path, d * 1.18 * 0.21, cfg.yarns[0], cfg);
+            }
+          }
+        
+          root.GoldenStitch = { render, GA, FIB };
+        })(typeof window !== 'undefined' ? window : globalThis);
+
+        function setup() {
+            let canvas = createCanvas(850, 1100);
+            canvas.parent('canvas-container');
+            pixelDensity(1);
+            noLoop();
+            document.querySelector('.loading').style.display = 'none';
+            initializeSystem();
+        }
+
+        function initializeSystem() {
+            const c = params.colors;
+            GoldenStitch.render(window, {
+                seed: params.seed, W: width, H: height, cx: width * params.cxr, cy: height * params.cyr,
+                count: params.count, spacing: params.spacing, armsF: ARMS[params.armsIdx],
+                roundsF: params.roundsF > 0, jitter: params.jitter, loopScale: params.loopScale,
+                tail: true, tailAngle: 2.75, unitPx: 100, grain: 1.0,
+                ground: c.ground, shade: '#12070f', yarns: [c.yarn1, c.yarn2, c.yarn3, c.yarn4]
+            });
+        }
+
+        function draw() {}
+
+        function updateParam(name, value) {
+            params[name] = parseFloat(value);
+            document.getElementById(name + '-value').textContent = name === 'armsIdx' ? ARMS[params[name]] : value;
+            initializeSystem();
+        }
+
+        function updateColor(id, value) {
+            params.colors[id] = value;
+            document.getElementById(id + '-value').textContent = value;
+            initializeSystem();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS - ALWAYS KEEP THESE
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            let input = document.getElementById('seed-input');
+            let newSeed = parseInt(input.value);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeSystem();
+            } else {
+                // Reset to current seed if invalid
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function resetParameters() {
+                        params = JSON.parse(JSON.stringify(defaultParams));
+            for (const k of ['count','spacing','armsIdx','roundsF','jitter','loopScale','cxr','cyr']) {
+                document.getElementById(k).value = params[k];
+                document.getElementById(k + '-value').textContent = k === 'armsIdx' ? ARMS[params[k]] : params[k];
+            }
+            for (const k in params.colors) {
+                document.getElementById(k).value = params.colors[k];
+                document.getElementById(k + '-value').textContent = params.colors[k];
+            }
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        // Initialize UI on load
+        window.addEventListener('load', function() {
+            updateSeedDisplay();
+        });
+    </script>
+</body>
+</html>
