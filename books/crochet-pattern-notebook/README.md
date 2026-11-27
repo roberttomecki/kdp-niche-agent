@@ -38,7 +38,7 @@ jest widoczna na liście wyników; tytuł czytelny w miniaturze 160 px (`output/
 ## Ustawienia w KDP
 
 - **Language:** English. **Low-content book:** TAK. **Large-print book:** NIE
-- **Author:** Robert Tomecki. **Series:** Golden Stitch Notebooks (książka nr 1)
+- **Author:** Robert Tomecki. **Series:** BRAK – KDP nie dopuszcza książek low-content do serii (odrzucenie serii 27.11.2026). Marka „Golden Stitch Notebooks” zostaje tylko na okładce i w A+.
 - **ISBN:** Publish without an ISBN
 - **Ink and paper:** Black & white interior, white paper
 - **Trim size:** 8.5 x 11 in. **Bleed:** **No Bleed** (wnętrze). **Cover finish:** **Matte**
@@ -114,4 +114,4 @@ Publikuj po jednym pinie co 2–3 dni; najlepiej przed świętami (prezent).
 14 dni, stawka domyślna. Po 2 tygodniach z raportu wyszukiwanych fraz przenieś frazy ze sprzedażą do
 kampanii ręcznej, a frazy z kliknięciami bez sprzedaży dodaj jako negatywne.
 
-**Po publikacji:** w Telegramie `/dodaj ASIN Crochet Pattern Notebook`; Author Central – dodaj książkę i serię.
+**Po publikacji:** w Telegramie `/dodaj ASIN Crochet Pattern Notebook`; Author Central – dodaj książkę (bez serii).
